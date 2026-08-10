@@ -1,5 +1,5 @@
 const CACHE_NAME = 'saan-cache-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const APP_SHELL = ['/Saan-App/', '/Saan-App/index.html', '/Saan-App/manifest.json', '/Saan-App/icon-192.png', '/Saan-App/icon-512.png'];
 
 self.addEventListener('install', function(event){
   self.skipWaiting();
