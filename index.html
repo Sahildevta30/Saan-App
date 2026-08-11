@@ -17,6 +17,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 <style>
   :root{
     --navy:#0d1226; --navy2:#141b38; --black:#05060d;
@@ -320,6 +321,35 @@
     "sahil@saan.app": "Sahil",
     "ananya@saan.app": "Ananya"
   };
+
+  /* ---------------- PUSH NOTIFICATIONS (FCM) ---------------- */
+  const VAPID_KEY = "BEzJEPiOY1hxO5EWRoFioPvOLTGvnRPXTYEUFfeeQ4sfbdEsuFJ4rjJ5WZ40j51uoffHHZm5VAle3_82JOXRg1c";
+  const PUSH_WORKER_URL = "https://saan-push.suryasahilsskg.workers.dev";
+
+  async function registerPushToken(name){
+    try{
+      if(!('Notification' in window) || Notification.permission !== 'granted') return;
+      const supported = await firebase.messaging.isSupported();
+      if(!supported) return;
+      const reg = await navigator.serviceWorker.ready;
+      const messaging = firebase.messaging();
+      const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+      if(token){ db.ref('fcmTokens/' + name).set(token); }
+    }catch(e){ /* ignore — best effort */ }
+  }
+
+  async function sendPush(toName, title, body){
+    try{
+      const snap = await db.ref('fcmTokens/' + toName).once('value');
+      const token = snap.val();
+      if(!token) return;
+      await fetch(PUSH_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, title: title, body: body })
+      });
+    }catch(e){ /* ignore — best effort */ }
+  }
 </script>
 
 <script>
@@ -414,8 +444,14 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     chatEl.classList.add('show');
     startChat(name);
     startCallListeners(name);
-    if('Notification' in window && Notification.permission==='default'){
-      Notification.requestPermission();
+    if('Notification' in window){
+      if(Notification.permission==='default'){
+        Notification.requestPermission().then(function(perm){
+          if(perm === 'granted') registerPushToken(name);
+        });
+      } else if(Notification.permission === 'granted'){
+        registerPushToken(name);
+      }
     }
   }
 
@@ -494,6 +530,7 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
       textInput.value=''; textInput.style.height='auto';
       pendingFile=null; pendingPreview.classList.remove('show'); fileInput.value='';
       clearTypingNow();
+      sendPush(otherPersonName(), myName, msg.text || (msg.fileName ? '📎 ' + msg.fileName : 'New message'));
     }catch(e){
       alert('Message could not be sent — check your internet and try again.');
     }finally{
