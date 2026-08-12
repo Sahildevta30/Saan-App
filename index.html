@@ -232,6 +232,31 @@
   .songDel{ background:none; border:none; color:var(--silver); font-size:.8rem; cursor:pointer; opacity:.6; }
   .songCard iframe{ width:100%; border:none; display:block; }
 
+  /* ---------- WATCH PARTY ---------- */
+  #wpTabs{ display:flex; gap:8px; padding:12px 16px; flex:none; }
+  .wpTab{
+    flex:1; padding:9px 6px; border-radius:14px; border:1px solid rgba(217,179,120,0.25);
+    background:none; color:var(--silver); font-family:'Jost',sans-serif; font-size:.68rem; cursor:pointer;
+  }
+  .wpTab.active{ background:rgba(217,179,120,0.15); color:var(--gold); border-color:var(--gold); }
+  .wpPane{ flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:0 16px 16px; min-height:0; }
+  #wpYtPlayer{ width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden; background:#000; flex:none; }
+  #wpVideoEl{ width:100%; border-radius:14px; background:#000; max-height:45vh; flex:none; }
+  #wpAddBar{ display:flex; gap:8px; margin-top:12px; flex:none; }
+  #wpAddBar input{
+    flex:1; padding:10px 14px; border-radius:20px; border:1px solid rgba(217,179,120,0.3);
+    background:rgba(20,27,56,0.7); color:var(--moonlight); font-family:'Jost',sans-serif; font-size:.8rem;
+  }
+  #wpAddBar button{
+    padding:0 18px; border-radius:20px; border:none; background:var(--gold); color:#1a1424;
+    font-family:'Jost',sans-serif; font-size:.75rem; cursor:pointer;
+  }
+  #wpCdHint{ font-size:.75rem; color:var(--silver); line-height:1.6; text-align:center; margin:20px 0; }
+  #wpCdDisplay{
+    text-align:center; font-size:3rem; color:var(--gold); font-family:'Cormorant Garamond',serif;
+    margin:30px 0; min-height:70px;
+  }
+
   /* ---------- CALENDAR ---------- */
   #calList{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
   .calItem{
@@ -553,6 +578,10 @@
         <span class="ghIcon">&#129449;</span>
         <span class="ghName">Flamingo</span>
       </button>
+      <button class="ghCard" data-game="watchparty">
+        <span class="ghIcon">&#127916;</span>
+        <span class="ghName">Watch Party</span>
+      </button>
     </div>
   </div>
 
@@ -639,6 +668,40 @@
     <div id="flamCounter"></div>
     <div id="flamCard"><div id="flamQ"></div></div>
     <button id="flamNextBtn" class="ghResetBtn">Next question &#129418;</button>
+  </div>
+
+  <div id="watchParty" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Watch Party</div>
+      <button class="iconBtn" id="wpCloseBtn">&#10005;</button>
+    </div>
+    <div id="wpTabs">
+      <button class="wpTab active" data-mode="youtube">YouTube</button>
+      <button class="wpTab" data-mode="video">Video link</button>
+      <button class="wpTab" data-mode="countdown">Netflix/Prime etc.</button>
+    </div>
+
+    <div id="wpYoutube" class="wpPane">
+      <div id="wpYtPlayer"></div>
+      <div id="wpAddBar">
+        <input id="wpYtInput" type="text" placeholder="Paste YouTube link..." />
+        <button id="wpYtAddBtn">Load</button>
+      </div>
+    </div>
+
+    <div id="wpVideo" class="wpPane" style="display:none;">
+      <video id="wpVideoEl" controls playsinline></video>
+      <div id="wpAddBar">
+        <input id="wpVideoInput" type="text" placeholder="Paste direct video link (.mp4)..." />
+        <button id="wpVideoAddBtn">Load</button>
+      </div>
+    </div>
+
+    <div id="wpCountdown" class="wpPane" style="display:none;">
+      <div id="wpCdHint">Open Netflix, Prime, Hotstar or any app on both phones, get to the exact spot, then tap Start — we'll count down together so you press play at the same second. Keep the voice call on to watch and chat! 🎬</div>
+      <div id="wpCdDisplay">Ready</div>
+      <button id="wpCdStartBtn" class="ghResetBtn">Start countdown</button>
+    </div>
   </div>
 
   <div id="bingoGame" class="gameScreen">
@@ -858,6 +921,7 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
   const rpsEl = document.getElementById('rpsGame');
   const bingoEl = document.getElementById('bingoGame');
   const flamEl = document.getElementById('flamingo');
+  const wpEl = document.getElementById('watchParty');
   const blEl = document.getElementById('bucketList');
   const calEl = document.getElementById('calendarScreen');
   const drawEl = document.getElementById('drawingBoard');
@@ -876,6 +940,7 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
   let mgListenerRef = null;
   let raceListenerRef = null;
   let flamListenerRef = null;
+  let wpListenerRef = null;
 
   function closeAllGameScreens(){
     gamesHubEl.classList.remove('show');
@@ -891,6 +956,7 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     mgEl.classList.remove('show');
     raceEl.classList.remove('show');
     flamEl.classList.remove('show');
+    wpEl.classList.remove('show');
     if(tttListenerRef){ tttListenerRef.off('value'); tttListenerRef = null; }
     if(rpsListenerRef){ rpsListenerRef.off('value'); rpsListenerRef = null; }
     if(bingoListenerRef){ bingoListenerRef.off('value'); bingoListenerRef = null; }
@@ -904,6 +970,8 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     if(mgListenerRef){ mgListenerRef.off('value'); mgListenerRef = null; }
     if(raceListenerRef){ raceListenerRef.off('value'); raceListenerRef = null; }
     if(flamListenerRef){ flamListenerRef.off('value'); flamListenerRef = null; }
+    if(wpListenerRef){ wpListenerRef.off('value'); wpListenerRef = null; }
+    if(wpCdInterval){ clearInterval(wpCdInterval); wpCdInterval = null; }
   }
 
   document.getElementById('gamesBtn').addEventListener('click', function(){
@@ -928,6 +996,7 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
       else if(game === 'musicguess'){ openMusicGuess(); }
       else if(game === 'race'){ openRace(); }
       else if(game === 'flamingo'){ openFlamingo(); }
+      else if(game === 'watchparty'){ openWatchParty(); }
     });
   });
 
@@ -1817,6 +1886,165 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
       pickFlamingoQuestion(state.used || []);
     });
   });
+
+  /* ---------------- WATCH PARTY ---------------- */
+  document.getElementById('wpCloseBtn').addEventListener('click', closeAllGameScreens);
+
+  const wpPanes = { youtube: document.getElementById('wpYoutube'), video: document.getElementById('wpVideo'), countdown: document.getElementById('wpCountdown') };
+  let wpCurrentMode = 'youtube';
+  document.querySelectorAll('.wpTab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.wpTab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      wpCurrentMode = tab.getAttribute('data-mode');
+      Object.keys(wpPanes).forEach(function(k){ wpPanes[k].style.display = (k===wpCurrentMode) ? 'flex' : 'none'; });
+    });
+  });
+
+  function openWatchParty(){
+    wpEl.classList.add('show');
+    const ref = db.ref('watchParty');
+    wpListenerRef = ref;
+    ref.on('value', function(snap){
+      const state = snap.val();
+      if(!state) return;
+      handleWpState(state);
+    });
+  }
+
+  let wpLastWriteTs = 0;
+  function wpIsOwnRecentWrite(state){
+    return state.updatedBy === myName && (Date.now() - (state.updatedAt || 0)) < 1200;
+  }
+
+  /* ---- YouTube sync ---- */
+  let wpYtPlayer = null;
+  let wpYtReady = false;
+  let wpYtApiLoading = false;
+  let wpPendingYtId = null;
+
+  function wpEnsureYtApi(cb){
+    if(window.YT && window.YT.Player){ cb(); return; }
+    if(!wpYtApiLoading){
+      wpYtApiLoading = true;
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+    }
+    const prevCb = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function(){ if(prevCb) prevCb(); cb(); };
+  }
+
+  function wpParseYoutubeId(url){
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  function wpCreateYtPlayer(videoId){
+    wpEnsureYtApi(function(){
+      if(wpYtPlayer){
+        wpYtPlayer.loadVideoById(videoId);
+        return;
+      }
+      wpYtPlayer = new YT.Player('wpYtPlayer', {
+        videoId: videoId,
+        playerVars: { playsinline: 1 },
+        events: {
+          onReady: function(){ wpYtReady = true; },
+          onStateChange: function(e){
+            if(e.data === YT.PlayerState.PLAYING) wpWriteState({ playing: true, position: wpYtPlayer.getCurrentTime() });
+            else if(e.data === YT.PlayerState.PAUSED) wpWriteState({ playing: false, position: wpYtPlayer.getCurrentTime() });
+          }
+        }
+      });
+    });
+  }
+
+  document.getElementById('wpYtAddBtn').addEventListener('click', function(){
+    const url = document.getElementById('wpYtInput').value.trim();
+    const vid = wpParseYoutubeId(url);
+    if(!vid){ alert('Paste a valid YouTube link.'); return; }
+    db.ref('watchParty').set({ mode: 'youtube', youtubeId: vid, playing: false, position: 0, updatedBy: myName, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+  });
+
+  /* ---- Direct video sync ---- */
+  const wpVideoEl = document.getElementById('wpVideoEl');
+  let wpVideoSuppress = false;
+  wpVideoEl.addEventListener('play', function(){ if(!wpVideoSuppress) wpWriteState({ playing: true, position: wpVideoEl.currentTime }); });
+  wpVideoEl.addEventListener('pause', function(){ if(!wpVideoSuppress) wpWriteState({ playing: false, position: wpVideoEl.currentTime }); });
+  wpVideoEl.addEventListener('seeked', function(){ if(!wpVideoSuppress) wpWriteState({ playing: !wpVideoEl.paused, position: wpVideoEl.currentTime }); });
+
+  document.getElementById('wpVideoAddBtn').addEventListener('click', function(){
+    const url = document.getElementById('wpVideoInput').value.trim();
+    if(!url) return;
+    db.ref('watchParty').set({ mode: 'video', videoUrl: url, playing: false, position: 0, updatedBy: myName, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+  });
+
+  function wpWriteState(partial){
+    const updates = Object.assign({ updatedBy: myName, updatedAt: firebase.database.ServerValue.TIMESTAMP }, partial);
+    db.ref('watchParty').update(updates);
+  }
+
+  function handleWpState(state){
+    if(state.mode === 'youtube' && state.youtubeId){
+      if(wpPendingYtId !== state.youtubeId){
+        wpPendingYtId = state.youtubeId;
+        wpCreateYtPlayer(state.youtubeId);
+      }
+      if(wpIsOwnRecentWrite(state)) return;
+      if(wpYtReady && wpYtPlayer && wpYtPlayer.getCurrentTime){
+        const drift = Math.abs(wpYtPlayer.getCurrentTime() - state.position);
+        if(drift > 1.5) wpYtPlayer.seekTo(state.position, true);
+        if(state.playing && wpYtPlayer.getPlayerState() !== 1) wpYtPlayer.playVideo();
+        if(!state.playing && wpYtPlayer.getPlayerState() === 1) wpYtPlayer.pauseVideo();
+      }
+    } else if(state.mode === 'video' && state.videoUrl){
+      if(wpVideoEl.getAttribute('data-src') !== state.videoUrl){
+        wpVideoEl.setAttribute('data-src', state.videoUrl);
+        wpVideoEl.src = state.videoUrl;
+      }
+      if(wpIsOwnRecentWrite(state)) return;
+      wpVideoSuppress = true;
+      const drift = Math.abs(wpVideoEl.currentTime - state.position);
+      if(drift > 1.5) wpVideoEl.currentTime = state.position;
+      if(state.playing) wpVideoEl.play().catch(function(){});
+      else wpVideoEl.pause();
+      setTimeout(function(){ wpVideoSuppress = false; }, 300);
+    } else if(state.mode === 'countdown'){
+      wpHandleCountdown(state);
+    }
+  }
+
+  /* ---- OTT sync countdown ---- */
+  const wpCdDisplayEl = document.getElementById('wpCdDisplay');
+  let wpCdInterval = null;
+
+  document.getElementById('wpCdStartBtn').addEventListener('click', function(){
+    db.ref('.info/serverTimeOffset').once('value').then(function(snap){
+      const offset = snap.val() || 0;
+      const serverNow = Date.now() + offset;
+      const startAt = serverNow + 5000;
+      db.ref('watchParty').set({ mode: 'countdown', startAt: startAt, updatedBy: myName, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+    });
+  });
+
+  function wpHandleCountdown(state){
+    if(!state.startAt) return;
+    if(wpCdInterval) clearInterval(wpCdInterval);
+    db.ref('.info/serverTimeOffset').once('value').then(function(snap){
+      const offset = snap.val() || 0;
+      wpCdInterval = setInterval(function(){
+        const now = Date.now() + offset;
+        const remain = Math.ceil((state.startAt - now) / 1000);
+        if(remain > 0){
+          wpCdDisplayEl.textContent = remain;
+        } else {
+          wpCdDisplayEl.textContent = 'PLAY NOW! 🎬';
+          clearInterval(wpCdInterval); wpCdInterval = null;
+        }
+      }, 200);
+    });
+  }
 
   /* ---------------- VOICE NOTES ---------------- */
   const vnEl = document.getElementById('voiceNotes');
