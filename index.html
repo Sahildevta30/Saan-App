@@ -257,6 +257,48 @@
     margin:30px 0; min-height:70px;
   }
 
+  /* ---------- SNAKE & LADDER ---------- */
+  #slStatus{ text-align:center; padding:8px; font-size:.8rem; color:var(--gold-soft); flex:none; }
+  #slBoardWrap{ flex:1; display:flex; align-items:center; justify-content:center; padding:8px; min-height:0; }
+  #slBoard{
+    display:grid; grid-template-columns:repeat(10, 1fr); grid-template-rows:repeat(10, 1fr);
+    width:min(92vw, 380px); height:min(92vw, 380px); border:2px solid rgba(217,179,120,0.4); border-radius:10px; overflow:hidden;
+  }
+  .slCell{
+    position:relative; border:.5px solid rgba(217,179,120,0.12); display:flex; align-items:flex-start; justify-content:flex-end;
+    font-size:.5rem; color:rgba(230,220,200,0.4); padding:2px; background:rgba(20,27,56,0.4);
+  }
+  .slCell.snakeHead{ background:rgba(160,40,50,0.35); }
+  .slCell.ladderBot{ background:rgba(120,160,90,0.3); }
+  .slToken{
+    position:absolute; width:38%; height:38%; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:.7rem; transition:all .4s ease; z-index:2; box-shadow:0 1px 4px rgba(0,0,0,0.5);
+  }
+  .slToken.p1{ background:var(--maroon-bright); left:6%; top:30%; }
+  .slToken.p2{ background:#5f7a9e; left:56%; top:30%; }
+  #slDiceRow{ flex:none; display:flex; align-items:center; justify-content:center; gap:14px; padding:10px; }
+  #slDice, #ludoDice{
+    width:52px; height:52px; border-radius:12px; background:rgba(20,27,56,0.9); border:1px solid rgba(217,179,120,0.35);
+    display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--gold);
+  }
+  #slRollBtn, #ludoRollBtn{
+    padding:12px 24px; border-radius:20px; border:2px solid var(--gold); background:rgba(217,179,120,0.12);
+    color:var(--gold); font-family:'Jost',sans-serif; font-size:.85rem; cursor:pointer;
+  }
+  #slRollBtn:disabled, #ludoRollBtn:disabled{ opacity:.35; }
+
+  /* ---------- LUDO ---------- */
+  #ludoStatus{ text-align:center; padding:8px; font-size:.8rem; color:var(--gold-soft); flex:none; }
+  #ludoBoardWrap{ flex:1; display:flex; align-items:center; justify-content:center; padding:8px; min-height:0; }
+  #ludoCanvas{ width:min(92vw,380px); height:min(92vw,380px); }
+
+  /* ---------- CARROM / POOL (shared) ---------- */
+  #carromStatus, #poolStatus{ text-align:center; padding:8px; font-size:.8rem; color:var(--gold-soft); flex:none; }
+  #carromScore{ text-align:center; font-size:.72rem; color:var(--silver); flex:none; margin-bottom:4px; }
+  #carromCanvas, #poolCanvas{
+    flex:1; margin:4px 14px 16px; border-radius:12px; touch-action:none; max-height:60vh;
+  }
+
   /* ---------- CALENDAR ---------- */
   #calList{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
   .calItem{
@@ -582,6 +624,22 @@
         <span class="ghIcon">&#127916;</span>
         <span class="ghName">Watch Party</span>
       </button>
+      <button class="ghCard" data-game="snakeladder">
+        <span class="ghIcon">&#128013;</span>
+        <span class="ghName">Snake &amp; Ladder</span>
+      </button>
+      <button class="ghCard" data-game="ludo">
+        <span class="ghIcon">&#127922;</span>
+        <span class="ghName">Ludo</span>
+      </button>
+      <button class="ghCard" data-game="carrom">
+        <span class="ghIcon">&#9899;</span>
+        <span class="ghName">Carrom</span>
+      </button>
+      <button class="ghCard" data-game="pool">
+        <span class="ghIcon">&#127983;</span>
+        <span class="ghName">8 Ball Pool</span>
+      </button>
     </div>
   </div>
 
@@ -668,6 +726,55 @@
     <div id="flamCounter"></div>
     <div id="flamCard"><div id="flamQ"></div></div>
     <button id="flamNextBtn" class="ghResetBtn">Next question &#129418;</button>
+  </div>
+
+  <div id="snakeLadder" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Snake &amp; Ladder</div>
+      <button class="iconBtn" id="slCloseBtn">&#10005;</button>
+    </div>
+    <div id="slStatus"></div>
+    <div id="slBoardWrap"><div id="slBoard"></div></div>
+    <div id="slDiceRow">
+      <div id="slDice">?</div>
+      <button id="slRollBtn">Roll dice</button>
+    </div>
+    <button id="slResetBtn" class="ghResetBtn">New game</button>
+  </div>
+
+  <div id="ludoGame" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Ludo</div>
+      <button class="iconBtn" id="ludoCloseBtn">&#10005;</button>
+    </div>
+    <div id="ludoStatus"></div>
+    <div id="ludoBoardWrap"><canvas id="ludoCanvas"></canvas></div>
+    <div id="slDiceRow">
+      <div id="ludoDice">?</div>
+      <button id="ludoRollBtn">Roll dice</button>
+    </div>
+    <button id="ludoResetBtn" class="ghResetBtn">New game</button>
+  </div>
+
+  <div id="carromGame" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Carrom</div>
+      <button class="iconBtn" id="carromCloseBtn">&#10005;</button>
+    </div>
+    <div id="carromStatus"></div>
+    <div id="carromScore"></div>
+    <canvas id="carromCanvas"></canvas>
+    <button id="carromResetBtn" class="ghResetBtn">New game</button>
+  </div>
+
+  <div id="poolGame" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">8 Ball Pool</div>
+      <button class="iconBtn" id="poolCloseBtn">&#10005;</button>
+    </div>
+    <div id="poolStatus"></div>
+    <canvas id="poolCanvas"></canvas>
+    <button id="poolResetBtn" class="ghResetBtn">New game</button>
   </div>
 
   <div id="watchParty" class="gameScreen">
@@ -922,6 +1029,10 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
   const bingoEl = document.getElementById('bingoGame');
   const flamEl = document.getElementById('flamingo');
   const wpEl = document.getElementById('watchParty');
+  const slEl = document.getElementById('snakeLadder');
+  const ludoEl = document.getElementById('ludoGame');
+  const carromEl = document.getElementById('carromGame');
+  const poolEl = document.getElementById('poolGame');
   const blEl = document.getElementById('bucketList');
   const calEl = document.getElementById('calendarScreen');
   const drawEl = document.getElementById('drawingBoard');
@@ -941,6 +1052,10 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
   let raceListenerRef = null;
   let flamListenerRef = null;
   let wpListenerRef = null;
+  let slListenerRef = null;
+  let ludoListenerRef = null;
+  let carromListenerRef = null;
+  let poolListenerRef = null;
 
   function closeAllGameScreens(){
     gamesHubEl.classList.remove('show');
@@ -957,6 +1072,10 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     raceEl.classList.remove('show');
     flamEl.classList.remove('show');
     wpEl.classList.remove('show');
+    slEl.classList.remove('show');
+    ludoEl.classList.remove('show');
+    carromEl.classList.remove('show');
+    poolEl.classList.remove('show');
     if(tttListenerRef){ tttListenerRef.off('value'); tttListenerRef = null; }
     if(rpsListenerRef){ rpsListenerRef.off('value'); rpsListenerRef = null; }
     if(bingoListenerRef){ bingoListenerRef.off('value'); bingoListenerRef = null; }
@@ -972,6 +1091,12 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     if(flamListenerRef){ flamListenerRef.off('value'); flamListenerRef = null; }
     if(wpListenerRef){ wpListenerRef.off('value'); wpListenerRef = null; }
     if(wpCdInterval){ clearInterval(wpCdInterval); wpCdInterval = null; }
+    if(slListenerRef){ slListenerRef.off('value'); slListenerRef = null; }
+    if(ludoListenerRef){ ludoListenerRef.off('value'); ludoListenerRef = null; }
+    if(carromListenerRef){ carromListenerRef.off('value'); carromListenerRef = null; }
+    if(carromRafId){ cancelAnimationFrame(carromRafId); carromRafId = null; }
+    if(poolListenerRef){ poolListenerRef.off('value'); poolListenerRef = null; }
+    if(poolRafId){ cancelAnimationFrame(poolRafId); poolRafId = null; }
   }
 
   document.getElementById('gamesBtn').addEventListener('click', function(){
@@ -997,6 +1122,10 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
       else if(game === 'race'){ openRace(); }
       else if(game === 'flamingo'){ openFlamingo(); }
       else if(game === 'watchparty'){ openWatchParty(); }
+      else if(game === 'snakeladder'){ openSnakeLadder(); }
+      else if(game === 'ludo'){ openLudo(); }
+      else if(game === 'carrom'){ openCarrom(); }
+      else if(game === 'pool'){ openPool(); }
     });
   });
 
@@ -2046,7 +2175,822 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     });
   }
 
-  /* ---------------- VOICE NOTES ---------------- */
+  /* ---------------- SNAKE & LADDER ---------------- */
+  document.getElementById('slCloseBtn').addEventListener('click', closeAllGameScreens);
+  const slBoardEl = document.getElementById('slBoard');
+  const slStatusEl = document.getElementById('slStatus');
+  const slDiceEl = document.getElementById('slDice');
+  const slRollBtn = document.getElementById('slRollBtn');
+
+  const SL_SNAKES = { 16:6, 47:26, 49:11, 56:53, 62:19, 64:60, 87:24, 93:73, 95:75, 98:78 };
+  const SL_LADDERS = { 1:38, 4:14, 9:31, 21:42, 28:84, 36:44, 51:67, 71:91, 80:100 };
+  const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+
+  function slCellNumber(rowFromTop, col){
+    const rowFromBottom = 9 - rowFromTop;
+    return (rowFromBottom % 2 === 0) ? (rowFromBottom*10 + col + 1) : (rowFromBottom*10 + (10 - col));
+  }
+
+  function slBuildBoard(){
+    slBoardEl.innerHTML = '';
+    for(let r=0;r<10;r++){
+      for(let c=0;c<10;c++){
+        const num = slCellNumber(r,c);
+        const cell = document.createElement('div');
+        cell.className = 'slCell';
+        cell.id = 'slc-' + num;
+        if(SL_SNAKES[num]) cell.classList.add('snakeHead');
+        if(SL_LADDERS[num]) cell.classList.add('ladderBot');
+        cell.textContent = num;
+        slBoardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function openSnakeLadder(){
+    slEl.classList.add('show');
+    slBuildBoard();
+    const ref = db.ref('games/snakeladder');
+    slListenerRef = ref;
+    ref.once('value').then(function(snap){
+      if(!snap.exists()){ ref.set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null }); }
+    });
+    ref.on('value', function(snap){
+      const state = snap.val();
+      if(!state) return;
+      renderSnakeLadder(state);
+    });
+  }
+
+  function slPlaceToken(cls, num){
+    document.querySelectorAll('.' + cls).forEach(function(t){ t.remove(); });
+    const cellId = num > 0 ? 'slc-' + num : 'slc-1';
+    const cell = document.getElementById(cellId);
+    if(!cell) return;
+    const token = document.createElement('div');
+    token.className = 'slToken ' + cls;
+    if(num === 0) token.style.opacity = '0.4';
+    token.textContent = cls === 'p1' ? 'S' : 'A';
+    cell.appendChild(token);
+  }
+
+  function renderSnakeLadder(state){
+    slPlaceToken('p1', state.positions.Sahil);
+    slPlaceToken('p2', state.positions.Ananya);
+    slDiceEl.textContent = state.lastRoll ? DICE_FACES[state.lastRoll] : '?';
+    if(state.winner){
+      slStatusEl.textContent = (state.winner === myName) ? 'You won! 🎉' : (state.winner + ' won!');
+      slRollBtn.disabled = true;
+    } else {
+      slStatusEl.textContent = (state.turn === myName) ? 'Your turn — roll the dice' : (otherPersonName() + "'s turn");
+      slRollBtn.disabled = (state.turn !== myName);
+    }
+  }
+
+  slRollBtn.addEventListener('click', function(){
+    db.ref('games/snakeladder').once('value').then(function(snap){
+      const state = snap.val();
+      if(!state || state.winner || state.turn !== myName) return;
+      const roll = 1 + Math.floor(Math.random()*6);
+      let pos = state.positions[myName] || 0;
+      let newPos = pos + roll;
+      if(newPos > 100){ newPos = pos; }
+      else {
+        if(SL_SNAKES[newPos]) newPos = SL_SNAKES[newPos];
+        else if(SL_LADDERS[newPos]) newPos = SL_LADDERS[newPos];
+      }
+      const updates = {};
+      updates['positions/' + myName] = newPos;
+      updates['lastRoll'] = roll;
+      updates['turn'] = otherPersonName();
+      if(newPos === 100) updates['winner'] = myName;
+      db.ref('games/snakeladder').update(updates);
+    });
+  });
+  document.getElementById('slResetBtn').addEventListener('click', function(){
+    db.ref('games/snakeladder').set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null });
+  });
+
+  /* ---------------- LUDO (simplified: shared 52-ring track + home stretch) ---------------- */
+  document.getElementById('ludoCloseBtn').addEventListener('click', closeAllGameScreens);
+  const ludoCanvas = document.getElementById('ludoCanvas');
+  const ludoCtx = ludoCanvas.getContext('2d');
+  const ludoStatusEl = document.getElementById('ludoStatus');
+  const ludoDiceEl = document.getElementById('ludoDice');
+  const ludoRollBtn = document.getElementById('ludoRollBtn');
+
+  const LUDO_TRACK_LEN = 52;
+  const LUDO_HOME_STRETCH = 6;
+  const LUDO_START = { Sahil: 0, Ananya: 26 };
+  const LUDO_SAFE = [0,8,13,21,26,34,39,47];
+  let ludoSelectedState = null;
+
+  function ludoInitTokens(){
+    return [
+      { pos: -1, homeSteps: 0 }, { pos: -1, homeSteps: 0 }
+    ];
+  }
+
+  function openLudo(){
+    ludoEl.classList.add('show');
+    ludoSizeCanvas();
+    const ref = db.ref('games/ludo');
+    ludoListenerRef = ref;
+    ref.once('value').then(function(snap){
+      if(!snap.exists()){
+        ref.set({ tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: 'Sahil', lastRoll: null, winner: null });
+      }
+    });
+    ref.on('value', function(snap){
+      const state = snap.val();
+      if(!state) return;
+      renderLudo(state);
+    });
+  }
+  function ludoSizeCanvas(){
+    const rect = ludoCanvas.getBoundingClientRect();
+    ludoCanvas.width = rect.width; ludoCanvas.height = rect.height;
+  }
+  window.addEventListener('resize', function(){ if(ludoEl.classList.contains('show')) ludoSizeCanvas(); });
+
+  function ludoTrackXY(cx, cy, r, trackIndex){
+    const angle = (trackIndex / LUDO_TRACK_LEN) * Math.PI * 2 - Math.PI/2;
+    return { x: cx + r*Math.cos(angle), y: cy + r*Math.sin(angle) };
+  }
+  function ludoHomeXY(cx, cy, r, name, step){
+    const startIdx = LUDO_START[name];
+    const inR = r - 22 - step*10;
+    const angle = (startIdx / LUDO_TRACK_LEN) * Math.PI * 2 - Math.PI/2;
+    return { x: cx + inR*Math.cos(angle), y: cy + inR*Math.sin(angle) };
+  }
+
+  function renderLudo(state){
+    const w = ludoCanvas.width, h = ludoCanvas.height;
+    const cx = w/2, cy = h/2, r = Math.min(w,h)/2 - 18;
+    ludoCtx.clearRect(0,0,w,h);
+    ludoCtx.fillStyle = '#141b38'; ludoCtx.fillRect(0,0,w,h);
+
+    ludoCtx.strokeStyle = 'rgba(217,179,120,0.3)'; ludoCtx.lineWidth = 20;
+    ludoCtx.beginPath(); ludoCtx.arc(cx,cy,r,0,Math.PI*2); ludoCtx.stroke();
+
+    for(let i=0;i<LUDO_TRACK_LEN;i++){
+      const p = ludoTrackXY(cx,cy,r,i);
+      ludoCtx.fillStyle = LUDO_SAFE.indexOf(i)!==-1 ? 'rgba(217,179,120,0.6)' : 'rgba(20,27,56,0.9)';
+      ludoCtx.beginPath(); ludoCtx.arc(p.x,p.y,4,0,Math.PI*2); ludoCtx.fill();
+    }
+    ['Sahil','Ananya'].forEach(function(name){
+      const p = ludoTrackXY(cx,cy,r,LUDO_START[name]);
+      ludoCtx.fillStyle = name==='Sahil' ? 'var(--maroon-bright)' : '#5f7a9e';
+      ludoCtx.fillStyle = name==='Sahil' ? '#c23a54' : '#5f7a9e';
+      ludoCtx.beginPath(); ludoCtx.arc(p.x,p.y,9,0,Math.PI*2); ludoCtx.fill();
+    });
+
+    ['Sahil','Ananya'].forEach(function(name, ni){
+      const tokens = state.tokens[name] || [];
+      const color = name==='Sahil' ? '#c23a54' : '#5f7a9e';
+      tokens.forEach(function(tok, ti){
+        let pt;
+        if(tok.pos === -1){
+          const baseAngle = (LUDO_START[name]/LUDO_TRACK_LEN)*Math.PI*2 - Math.PI/2 + (ti===0?-0.35:0.35);
+          pt = { x: cx + (r+40)*Math.cos(baseAngle), y: cy + (r+40)*Math.sin(baseAngle) };
+        } else if(tok.homeSteps >= LUDO_HOME_STRETCH){
+          pt = { x: cx + (ti===0?-8:8), y: cy };
+        } else if(tok.homeSteps > 0){
+          pt = ludoHomeXY(cx,cy,r,name,tok.homeSteps);
+        } else {
+          const trackIdx = (LUDO_START[name] + tok.pos) % LUDO_TRACK_LEN;
+          pt = ludoTrackXY(cx,cy,r,trackIdx);
+        }
+        ludoCtx.fillStyle = color;
+        ludoCtx.strokeStyle = '#f6eeda'; ludoCtx.lineWidth = 1.5;
+        ludoCtx.beginPath(); ludoCtx.arc(pt.x + (ti===1?6:-6), pt.y, 8, 0, Math.PI*2); ludoCtx.fill(); ludoCtx.stroke();
+      });
+    });
+
+    ludoDiceEl.textContent = state.lastRoll ? DICE_FACES[state.lastRoll] : '?';
+    if(state.winner){
+      ludoStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (state.winner + ' won!');
+      ludoRollBtn.disabled = true;
+    } else {
+      ludoStatusEl.textContent = (state.turn===myName) ? 'Your turn — roll the dice' : (otherPersonName()+"'s turn");
+      ludoRollBtn.disabled = (state.turn!==myName);
+    }
+  }
+
+  function ludoMovableTokens(tokens, roll){
+    const idxs = [];
+    tokens.forEach(function(t,i){
+      if(t.pos===-1){ if(roll===6) idxs.push(i); }
+      else if(t.homeSteps < LUDO_HOME_STRETCH){
+        if(t.homeSteps + roll <= LUDO_HOME_STRETCH) idxs.push(i);
+      }
+    });
+    return idxs;
+  }
+
+  ludoRollBtn.addEventListener('click', function(){
+    db.ref('games/ludo').once('value').then(function(snap){
+      const state = snap.val();
+      if(!state || state.winner || state.turn !== myName) return;
+      const roll = 1 + Math.floor(Math.random()*6);
+      const myTokens = state.tokens[myName];
+      const movable = ludoMovableTokens(myTokens, roll);
+      if(movable.length === 0){
+        db.ref('games/ludo').update({ lastRoll: roll, turn: otherPersonName() });
+        return;
+      }
+      if(movable.length === 1){
+        ludoApplyMove(state, movable[0], roll);
+      } else {
+        db.ref('games/ludo/lastRoll').set(roll);
+        ludoSelectedState = { state: state, roll: roll, options: movable };
+        ludoStatusEl.textContent = 'Tap a token to move it';
+        alert('You have ' + movable.length + ' movable tokens. Tap the highlighted move: token ' + (movable[0]+1) + ' or ' + (movable[1]+1) + '. Moving token ' + (movable[0]+1) + '.');
+        ludoApplyMove(state, movable[0], roll);
+      }
+    });
+  });
+
+  function ludoApplyMove(state, tokenIdx, roll){
+    const myTokens = JSON.parse(JSON.stringify(state.tokens[myName]));
+    const tok = myTokens[tokenIdx];
+    if(tok.pos === -1){ tok.pos = 0; }
+    else if(tok.homeSteps > 0){ tok.homeSteps += roll; }
+    else {
+      tok.pos += roll;
+      if(tok.pos >= LUDO_TRACK_LEN - LUDO_START[myName] % LUDO_TRACK_LEN){ }
+      if(tok.pos >= 51){ tok.homeSteps = tok.pos - 51; tok.pos = 51; }
+    }
+    const updates = {};
+    let captured = false;
+    if(tok.pos >= 0 && tok.pos < 51 && tok.homeSteps === 0){
+      const myTrackIdx = (LUDO_START[myName] + tok.pos) % LUDO_TRACK_LEN;
+      if(LUDO_SAFE.indexOf(myTrackIdx) === -1){
+        const oppName = otherPersonName();
+        const oppTokens = JSON.parse(JSON.stringify(state.tokens[oppName]));
+        oppTokens.forEach(function(ot){
+          if(ot.pos >= 0 && ot.homeSteps === 0){
+            const oppTrackIdx = (LUDO_START[oppName] + ot.pos) % LUDO_TRACK_LEN;
+            if(oppTrackIdx === myTrackIdx){ ot.pos = -1; captured = true; }
+          }
+        });
+        if(captured) updates['tokens/' + oppName] = oppTokens;
+      }
+    }
+    updates['tokens/' + myName] = myTokens;
+    updates['lastRoll'] = roll;
+    const allHome = myTokens.every(function(t){ return t.homeSteps >= LUDO_HOME_STRETCH; });
+    if(allHome) updates['winner'] = myName;
+    updates['turn'] = (roll===6 && !allHome) ? myName : otherPersonName();
+    db.ref('games/ludo').update(updates);
+  }
+
+  document.getElementById('ludoResetBtn').addEventListener('click', function(){
+    db.ref('games/ludo').set({ tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: 'Sahil', lastRoll: null, winner: null });
+  });
+
+  /* ---------------- SHARED 2D PHYSICS (Carrom + Pool) ---------------- */
+  function physStep(pieces, W, H, friction){
+    pieces.forEach(function(p){
+      if(!p.active) return;
+      p.vx *= friction; p.vy *= friction;
+      if(Math.hypot(p.vx,p.vy) < 0.04){ p.vx = 0; p.vy = 0; }
+      p.x += p.vx; p.y += p.vy;
+      if(p.x - p.r < 0){ p.x = p.r; p.vx = -p.vx*0.82; }
+      if(p.x + p.r > W){ p.x = W - p.r; p.vx = -p.vx*0.82; }
+      if(p.y - p.r < 0){ p.y = p.r; p.vy = -p.vy*0.82; }
+      if(p.y + p.r > H){ p.y = H - p.r; p.vy = -p.vy*0.82; }
+    });
+    for(let i=0;i<pieces.length;i++){
+      if(!pieces[i].active) continue;
+      for(let j=i+1;j<pieces.length;j++){
+        if(!pieces[j].active) continue;
+        const a=pieces[i], b=pieces[j];
+        const dx=b.x-a.x, dy=b.y-a.y;
+        const dist=Math.hypot(dx,dy);
+        const minDist=a.r+b.r;
+        if(dist>0 && dist<minDist){
+          const nx=dx/dist, ny=dy/dist;
+          const overlap=(minDist-dist)/2;
+          a.x -= nx*overlap; a.y -= ny*overlap;
+          b.x += nx*overlap; b.y += ny*overlap;
+          const rvx=b.vx-a.vx, rvy=b.vy-a.vy;
+          const velAlongNormal = rvx*nx+rvy*ny;
+          if(velAlongNormal<0){
+            const impulse = -1.88*velAlongNormal/2;
+            a.vx -= impulse*nx; a.vy -= impulse*ny;
+            b.vx += impulse*nx; b.vy += impulse*ny;
+          }
+        }
+      }
+    }
+  }
+  function physAnyMoving(pieces){
+    return pieces.some(function(p){ return p.active && (Math.abs(p.vx)>0.04||Math.abs(p.vy)>0.04); });
+  }
+  function physCheckPockets(pieces, pockets, pocketR){
+    const potted = [];
+    pieces.forEach(function(p){
+      if(!p.active) return;
+      pockets.forEach(function(pk){
+        if(Math.hypot(p.x-pk.x, p.y-pk.y) < pocketR){ p.active = false; p.vx=0; p.vy=0; potted.push(p.id); }
+      });
+    });
+    return potted;
+  }
+
+  /* ---------------- CARROM ---------------- */
+  document.getElementById('carromCloseBtn').addEventListener('click', closeAllGameScreens);
+  const carromCanvas = document.getElementById('carromCanvas');
+  const carromCtx = carromCanvas.getContext('2d');
+  const carromStatusEl = document.getElementById('carromStatus');
+  const carromScoreEl = document.getElementById('carromScore');
+  let carromRafId = null;
+  let carromPieces = [];
+  let carromW = 300, carromH = 300;
+  let carromAiming = false, carromAimStart = null, carromDragPt = null;
+  let carromShotRunning = false;
+  let carromLastSync = 0;
+
+  function carromSizeCanvas(){
+    const rect = carromCanvas.getBoundingClientRect();
+    carromCanvas.width = rect.width; carromCanvas.height = rect.height;
+    carromW = rect.width; carromH = rect.height;
+  }
+  window.addEventListener('resize', function(){ if(carromEl.classList.contains('show')) carromSizeCanvas(); });
+
+  function carromInitPieces(){
+    const cx = carromW/2, cy = carromH/2;
+    const r = Math.min(carromW,carromH) * 0.028;
+    const pieces = [];
+    pieces.push({ id:'queen', x:cx, y:cy, vx:0, vy:0, r:r*1.05, color:'#c23a54', active:true });
+    const ringR = r*2.3;
+    for(let i=0;i<8;i++){
+      const ang = (i/8)*Math.PI*2;
+      pieces.push({
+        id: 'c'+i, x: cx+ringR*Math.cos(ang), y: cy+ringR*Math.sin(ang),
+        vx:0, vy:0, r:r, color: (i%2===0)?'#1a1424':'#f6eeda', active:true,
+        colorName: (i%2===0)?'black':'white'
+      });
+    }
+    pieces.push({ id:'striker', x:cx, y:carromH - r*3, vx:0, vy:0, r:r*1.15, color:'#e8c896', active:true, isStriker:true });
+    return pieces;
+  }
+
+  function carromPockets(){
+    const m = Math.min(carromW,carromH)*0.06;
+    return [ {x:m,y:m}, {x:carromW-m,y:m}, {x:m,y:carromH-m}, {x:carromW-m,y:carromH-m} ];
+  }
+
+  function openCarrom(){
+    carromEl.classList.add('show');
+    carromSizeCanvas();
+    const ref = db.ref('games/carrom');
+    carromListenerRef = ref;
+    ref.once('value').then(function(snap){
+      if(!snap.exists()){
+        ref.set({
+          coins: carromInitPieces(), turn: 'Sahil', scores: { Sahil:0, Ananya:0 },
+          assignedColor: { Sahil:null, Ananya:null }, queenPending:false, winner:null, shotInProgress:false
+        });
+      }
+    });
+    ref.on('value', function(snap){
+      const state = snap.val();
+      if(!state) return;
+      if(!carromShotRunning){
+        carromPieces = (state.shotInProgress && state.liveCoins) ? state.liveCoins : state.coins;
+        carromDraw();
+      }
+      carromUpdateStatus(state);
+    });
+  }
+
+  function carromUpdateStatus(state){
+    const sc = state.scores || {Sahil:0,Ananya:0};
+    const ac = state.assignedColor || {};
+    carromScoreEl.textContent = 'Sahil (' + (ac.Sahil||'?') + '): ' + sc.Sahil + '   —   Ananya (' + (ac.Ananya||'?') + '): ' + sc.Ananya;
+    if(state.winner){
+      carromStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (state.winner + ' won!');
+    } else if(state.shotInProgress){
+      carromStatusEl.textContent = 'Shot in progress...';
+    } else {
+      carromStatusEl.textContent = (state.turn===myName) ? 'Your shot — drag the striker back and release' : (otherPersonName() + "'s turn");
+    }
+  }
+
+  function carromDraw(){
+    carromCtx.clearRect(0,0,carromW,carromH);
+    const grad = carromCtx.createLinearGradient(0,0,carromW,carromH);
+    grad.addColorStop(0,'#8a5a34'); grad.addColorStop(1,'#6e431f');
+    carromCtx.fillStyle = grad; carromCtx.fillRect(0,0,carromW,carromH);
+    carromCtx.strokeStyle = 'rgba(217,179,120,0.5)'; carromCtx.lineWidth = 6;
+    carromCtx.strokeRect(3,3,carromW-6,carromH-6);
+
+    carromPockets().forEach(function(pk){
+      carromCtx.fillStyle = '#000';
+      carromCtx.beginPath(); carromCtx.arc(pk.x,pk.y,Math.min(carromW,carromH)*0.045,0,Math.PI*2); carromCtx.fill();
+    });
+
+    carromCtx.strokeStyle = 'rgba(217,179,120,0.3)'; carromCtx.lineWidth = 1.5;
+    carromCtx.beginPath(); carromCtx.arc(carromW/2, carromH/2, Math.min(carromW,carromH)*0.22, 0, Math.PI*2); carromCtx.stroke();
+
+    carromPieces.forEach(function(p){
+      if(!p.active) return;
+      carromCtx.beginPath();
+      carromCtx.fillStyle = p.color;
+      carromCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      carromCtx.fill();
+      carromCtx.strokeStyle = 'rgba(0,0,0,0.4)'; carromCtx.lineWidth = 1;
+      carromCtx.stroke();
+    });
+
+    if(carromAiming && carromDragPt){
+      const striker = carromPieces.find(function(p){ return p.isStriker; });
+      if(striker){
+        carromCtx.strokeStyle = 'rgba(232,200,150,0.8)'; carromCtx.lineWidth = 2;
+        carromCtx.setLineDash([6,6]);
+        carromCtx.beginPath();
+        carromCtx.moveTo(striker.x, striker.y);
+        const dx = striker.x - carromDragPt.x, dy = striker.y - carromDragPt.y;
+        carromCtx.lineTo(striker.x + dx*2, striker.y + dy*2);
+        carromCtx.stroke();
+        carromCtx.setLineDash([]);
+      }
+    }
+  }
+
+  function carromPointerPos(e){
+    const rect = carromCanvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx-rect.left, y: cy-rect.top };
+  }
+
+  function carromCanShoot(){
+    return carromPieces.length && !carromShotRunning;
+  }
+
+  carromCanvas.addEventListener('mousedown', carromStartAim);
+  carromCanvas.addEventListener('touchstart', function(e){ e.preventDefault(); carromStartAim(e); });
+  carromCanvas.addEventListener('mousemove', carromMoveAim);
+  carromCanvas.addEventListener('touchmove', function(e){ e.preventDefault(); carromMoveAim(e); });
+  carromCanvas.addEventListener('mouseup', carromReleaseAim);
+  carromCanvas.addEventListener('touchend', function(e){ e.preventDefault(); carromReleaseAim(); });
+
+  function carromStartAim(e){
+    db.ref('games/carrom/turn').once('value').then(function(snap){
+      if(snap.val() !== myName || carromShotRunning) return;
+      const striker = carromPieces.find(function(p){ return p.isStriker; });
+      if(!striker) return;
+      const pos = carromPointerPos(e);
+      if(Math.hypot(pos.x-striker.x, pos.y-striker.y) < striker.r*4){
+        carromAiming = true;
+      }
+    });
+  }
+  function carromMoveAim(e){
+    if(!carromAiming) return;
+    carromDragPt = carromPointerPos(e);
+    carromDraw();
+  }
+  function carromReleaseAim(){
+    if(!carromAiming || !carromDragPt) { carromAiming = false; return; }
+    const striker = carromPieces.find(function(p){ return p.isStriker; });
+    carromAiming = false;
+    const dx = striker.x - carromDragPt.x, dy = striker.y - carromDragPt.y;
+    const dist = Math.hypot(dx,dy);
+    if(dist < 5){ carromDragPt = null; return; }
+    const power = Math.min(dist * 0.16, 14);
+    striker.vx = (dx/dist) * power;
+    striker.vy = (dy/dist) * power;
+    carromDragPt = null;
+    carromRunShot();
+  }
+
+  function carromRunShot(){
+    carromShotRunning = true;
+    db.ref('games/carrom').update({ shotInProgress: true });
+    let settleFrames = 0;
+    function loop(ts){
+      physStep(carromPieces, carromW, carromH, 0.985);
+      const pockets = carromPockets();
+      const potted = physCheckPockets(carromPieces, pockets, Math.min(carromW,carromH)*0.045);
+      carromDraw();
+      if(!physAnyMoving(carromPieces)){ settleFrames++; } else { settleFrames = 0; }
+      if(ts - carromLastSync > 90){
+        carromLastSync = ts;
+        db.ref('games/carrom/liveCoins').set(carromPieces.map(function(p){ return {id:p.id,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,vx:0,vy:0,r:p.r,color:p.color,active:p.active,isStriker:!!p.isStriker,colorName:p.colorName||null}; }));
+      }
+      if(settleFrames > 20){
+        carromFinishShot(potted);
+        return;
+      }
+      carromRafId = requestAnimationFrame(loop);
+    }
+    carromRafId = requestAnimationFrame(loop);
+  }
+
+  function carromFinishShot(pottedIdsAllFrames){
+    db.ref('games/carrom').once('value').then(function(snap){
+      const state = snap.val();
+      const scores = state.scores || {Sahil:0,Ananya:0};
+      const assignedColor = state.assignedColor || {Sahil:null,Ananya:null};
+      let queenPending = state.queenPending;
+      let winner = null;
+      let potThisTurn = false;
+
+      const striker = carromPieces.find(function(p){ return p.isStriker; });
+      if(striker && !striker.active){
+        striker.active = true; striker.x = carromW/2; striker.y = carromH - striker.r*3; striker.vx=0; striker.vy=0;
+      }
+
+      carromPieces.forEach(function(p){
+        if(p.active || p.isStriker) return;
+        if(p.id === 'queen'){
+          queenPending = true;
+          scores[myName] += 3;
+          queenPending = false;
+          potThisTurn = true;
+        } else {
+          if(!assignedColor.Sahil && !assignedColor.Ananya){
+            assignedColor[myName] = p.colorName;
+            assignedColor[otherPersonName()] = (p.colorName === 'black') ? 'white' : 'black';
+          }
+          const owner = (assignedColor[myName] === p.colorName) ? myName : otherPersonName();
+          scores[owner] += 1;
+          if(owner === myName) potThisTurn = true;
+        }
+      });
+
+      const myColor = assignedColor[myName];
+      if(myColor){
+        const remaining = carromPieces.filter(function(p){ return p.colorName === myColor && p.active; }).length;
+        if(remaining === 0) winner = myName;
+      }
+
+      const finalCoins = carromPieces.map(function(p){
+        return { id:p.id, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, isStriker:!!p.isStriker, colorName:p.colorName||null };
+      });
+
+      const updates = {
+        coins: finalCoins, scores: scores, assignedColor: assignedColor,
+        queenPending: queenPending, shotInProgress:false, liveCoins:null,
+        turn: potThisTurn ? myName : otherPersonName()
+      };
+      if(winner) updates.winner = winner;
+      db.ref('games/carrom').update(updates).then(function(){
+        carromShotRunning = false;
+      });
+    });
+  }
+
+  document.getElementById('carromResetBtn').addEventListener('click', function(){
+    db.ref('games/carrom').set({
+      coins: carromInitPieces(), turn: 'Sahil', scores: { Sahil:0, Ananya:0 },
+      assignedColor: { Sahil:null, Ananya:null }, queenPending:false, winner:null, shotInProgress:false
+    });
+  });
+
+  /* ---------------- 8 BALL POOL ---------------- */
+  document.getElementById('poolCloseBtn').addEventListener('click', closeAllGameScreens);
+  const poolCanvas = document.getElementById('poolCanvas');
+  const poolCtx = poolCanvas.getContext('2d');
+  const poolStatusEl = document.getElementById('poolStatus');
+  let poolRafId = null;
+  let poolPieces = [];
+  let poolW = 300, poolH = 150;
+  let poolAiming = false, poolDragPt = null;
+  let poolShotRunning = false;
+  let poolLastSync = 0;
+
+  const POOL_COLORS = ['#d94b2b','#2b64d9','#c23a54','#8a5a34','#e8a62b','#2f9e55','#7a1f33'];
+
+  function poolSizeCanvas(){
+    const rect = poolCanvas.getBoundingClientRect();
+    poolCanvas.width = rect.width; poolCanvas.height = rect.width/2;
+    poolW = poolCanvas.width; poolH = poolCanvas.height;
+    poolCanvas.style.height = poolH + 'px';
+  }
+  window.addEventListener('resize', function(){ if(poolEl.classList.contains('show')) poolSizeCanvas(); });
+
+  function poolInitPieces(){
+    const r = poolW * 0.018;
+    const pieces = [];
+    pieces.push({ id:'cue', x: poolW*0.25, y: poolH/2, vx:0, vy:0, r:r, color:'#f6eeda', active:true, isCue:true });
+    const apexX = poolW*0.7, apexY = poolH/2;
+    let num = 1;
+    const order = [1,9,2,10,8,3,11,4,12,5,13,6,14,7,15];
+    let oi = 0;
+    for(let row=0; row<5; row++){
+      for(let col=0; col<=row; col++){
+        const n = order[oi++];
+        const isStripe = n >= 9;
+        const baseColor = POOL_COLORS[(n>=9? n-9 : n-1) % 7];
+        pieces.push({
+          id:'b'+n, num:n, x: apexX + row*(r*1.8), y: apexY - row*r + col*r*2,
+          vx:0, vy:0, r:r, color: (n===8)?'#111':baseColor, active:true,
+          group: (n===8)?'eight':(isStripe?'stripe':'solid'), isStripe: isStripe
+        });
+      }
+    }
+    return pieces;
+  }
+
+  function poolPockets(){
+    const m = poolW*0.02;
+    return [
+      {x:m,y:m}, {x:poolW/2,y:m*0.6}, {x:poolW-m,y:m},
+      {x:m,y:poolH-m}, {x:poolW/2,y:poolH-m*0.6}, {x:poolW-m,y:poolH-m}
+    ];
+  }
+
+  function openPool(){
+    poolEl.classList.add('show');
+    poolSizeCanvas();
+    const ref = db.ref('games/pool');
+    poolListenerRef = ref;
+    ref.once('value').then(function(snap){
+      if(!snap.exists()){
+        ref.set({ balls: poolInitPieces(), turn:'Sahil', assignedGroup:{Sahil:null,Ananya:null}, winner:null, shotInProgress:false });
+      }
+    });
+    ref.on('value', function(snap){
+      const state = snap.val();
+      if(!state) return;
+      if(!poolShotRunning){
+        poolPieces = (state.shotInProgress && state.liveBalls) ? state.liveBalls : state.balls;
+        poolDraw();
+      }
+      poolUpdateStatus(state);
+    });
+  }
+
+  function poolUpdateStatus(state){
+    const ag = state.assignedGroup || {};
+    if(state.winner){
+      poolStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (state.winner + ' won!');
+    } else if(state.shotInProgress){
+      poolStatusEl.textContent = 'Shot in progress...';
+    } else {
+      const myGroup = ag[myName] ? (' — you: ' + ag[myName]) : '';
+      poolStatusEl.textContent = (state.turn===myName) ? ('Your shot' + myGroup) : (otherPersonName() + "'s turn");
+    }
+  }
+
+  function poolDraw(){
+    poolCtx.clearRect(0,0,poolW,poolH);
+    poolCtx.fillStyle = '#0b5e34'; poolCtx.fillRect(0,0,poolW,poolH);
+    poolCtx.strokeStyle = 'rgba(217,179,120,0.5)'; poolCtx.lineWidth = 10;
+    poolCtx.strokeRect(5,5,poolW-10,poolH-10);
+
+    poolPockets().forEach(function(pk){
+      poolCtx.fillStyle = '#000';
+      poolCtx.beginPath(); poolCtx.arc(pk.x,pk.y,poolW*0.024,0,Math.PI*2); poolCtx.fill();
+    });
+
+    poolPieces.forEach(function(p){
+      if(!p.active) return;
+      poolCtx.beginPath();
+      poolCtx.fillStyle = p.color;
+      poolCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      poolCtx.fill();
+      if(p.isStripe){
+        poolCtx.fillStyle = '#f6eeda';
+        poolCtx.beginPath(); poolCtx.rect(p.x-p.r, p.y-p.r*0.35, p.r*2, p.r*0.7); poolCtx.fill();
+      }
+      if(p.num){
+        poolCtx.fillStyle = p.isStripe ? '#1a1424' : '#fff';
+        poolCtx.font = (p.r*1.1) + 'px sans-serif';
+        poolCtx.textAlign = 'center'; poolCtx.textBaseline = 'middle';
+        poolCtx.fillText(p.num, p.x, p.y);
+      }
+      poolCtx.strokeStyle = 'rgba(0,0,0,0.4)'; poolCtx.lineWidth = 1; poolCtx.stroke();
+    });
+
+    if(poolAiming && poolDragPt){
+      const cue = poolPieces.find(function(p){ return p.isCue; });
+      if(cue){
+        poolCtx.strokeStyle = 'rgba(255,255,255,0.8)'; poolCtx.lineWidth = 2;
+        poolCtx.setLineDash([6,6]);
+        poolCtx.beginPath();
+        poolCtx.moveTo(cue.x, cue.y);
+        const dx = cue.x - poolDragPt.x, dy = cue.y - poolDragPt.y;
+        poolCtx.lineTo(cue.x + dx*2.5, cue.y + dy*2.5);
+        poolCtx.stroke();
+        poolCtx.setLineDash([]);
+      }
+    }
+  }
+
+  function poolPointerPos(e){
+    const rect = poolCanvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (cx-rect.left)*(poolW/rect.width), y: (cy-rect.top)*(poolH/rect.height) };
+  }
+
+  poolCanvas.addEventListener('mousedown', poolStartAim);
+  poolCanvas.addEventListener('touchstart', function(e){ e.preventDefault(); poolStartAim(e); });
+  poolCanvas.addEventListener('mousemove', poolMoveAim);
+  poolCanvas.addEventListener('touchmove', function(e){ e.preventDefault(); poolMoveAim(e); });
+  poolCanvas.addEventListener('mouseup', poolReleaseAim);
+  poolCanvas.addEventListener('touchend', function(e){ e.preventDefault(); poolReleaseAim(); });
+
+  function poolStartAim(e){
+    db.ref('games/pool/turn').once('value').then(function(snap){
+      if(snap.val() !== myName || poolShotRunning) return;
+      const cue = poolPieces.find(function(p){ return p.isCue; });
+      if(!cue || !cue.active) return;
+      const pos = poolPointerPos(e);
+      if(Math.hypot(pos.x-cue.x, pos.y-cue.y) < cue.r*5){ poolAiming = true; }
+    });
+  }
+  function poolMoveAim(e){ if(!poolAiming) return; poolDragPt = poolPointerPos(e); poolDraw(); }
+  function poolReleaseAim(){
+    if(!poolAiming || !poolDragPt){ poolAiming = false; return; }
+    const cue = poolPieces.find(function(p){ return p.isCue; });
+    poolAiming = false;
+    const dx = cue.x - poolDragPt.x, dy = cue.y - poolDragPt.y;
+    const dist = Math.hypot(dx,dy);
+    if(dist < 5){ poolDragPt = null; return; }
+    const power = Math.min(dist * 0.13, 13);
+    cue.vx = (dx/dist)*power; cue.vy = (dy/dist)*power;
+    poolDragPt = null;
+    poolRunShot();
+  }
+
+  function poolRunShot(){
+    poolShotRunning = true;
+    db.ref('games/pool').update({ shotInProgress:true });
+    let settleFrames = 0;
+    function loop(ts){
+      physStep(poolPieces, poolW, poolH, 0.988);
+      const potted = physCheckPockets(poolPieces, poolPockets(), poolW*0.024);
+      poolDraw();
+      if(!physAnyMoving(poolPieces)){ settleFrames++; } else { settleFrames = 0; }
+      if(ts - poolLastSync > 90){
+        poolLastSync = ts;
+        db.ref('games/pool/liveBalls').set(poolPieces.map(function(p){
+          return {id:p.id,num:p.num||null,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,vx:0,vy:0,r:p.r,color:p.color,active:p.active,isCue:!!p.isCue,isStripe:!!p.isStripe,group:p.group||null};
+        }));
+      }
+      if(settleFrames > 20){ poolFinishShot(); return; }
+      poolRafId = requestAnimationFrame(loop);
+    }
+    poolRafId = requestAnimationFrame(loop);
+  }
+
+  function poolFinishShot(){
+    db.ref('games/pool').once('value').then(function(snap){
+      const state = snap.val();
+      const assignedGroup = state.assignedGroup || {Sahil:null,Ananya:null};
+      let winner = null, potThisTurn = false, scratched = false, potted8Early = false;
+
+      const cue = poolPieces.find(function(p){ return p.isCue; });
+      if(cue && !cue.active){
+        scratched = true;
+        cue.active = true; cue.x = poolW*0.25; cue.y = poolH/2; cue.vx=0; cue.vy=0;
+      }
+
+      poolPieces.forEach(function(p){
+        if(p.active || p.isCue) return;
+        if(p.group === 'eight'){
+          const myGroup = assignedGroup[myName];
+          const myRemaining = poolPieces.filter(function(x){ return x.group===myGroup && x.active; }).length;
+          if(!myGroup || myRemaining > 0){ potted8Early = true; }
+          else { winner = myName; }
+          return;
+        }
+        if(!assignedGroup.Sahil && !assignedGroup.Ananya){
+          assignedGroup[myName] = p.group;
+          assignedGroup[otherPersonName()] = (p.group==='solid') ? 'stripe' : 'solid';
+        }
+        const owner = (assignedGroup[myName] === p.group) ? myName : otherPersonName();
+        if(owner === myName) potThisTurn = true;
+      });
+
+      if(potted8Early) winner = otherPersonName();
+
+      const finalBalls = poolPieces.map(function(p){
+        return { id:p.id, num:p.num||null, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, isCue:!!p.isCue, isStripe:!!p.isStripe, group:p.group||null };
+      });
+
+      const updates = {
+        balls: finalBalls, assignedGroup: assignedGroup, shotInProgress:false, liveBalls:null,
+        turn: (potThisTurn && !scratched) ? myName : otherPersonName()
+      };
+      if(winner) updates.winner = winner;
+      db.ref('games/pool').update(updates).then(function(){ poolShotRunning = false; });
+    });
+  }
+
+  document.getElementById('poolResetBtn').addEventListener('click', function(){
+    poolSizeCanvas();
+    db.ref('games/pool').set({ balls: poolInitPieces(), turn:'Sahil', assignedGroup:{Sahil:null,Ananya:null}, winner:null, shotInProgress:false });
+  });
+
+
   const vnEl = document.getElementById('voiceNotes');
   const vnListEl = document.getElementById('vnList');
   const vnRecBtn = document.getElementById('vnRecBtn');
