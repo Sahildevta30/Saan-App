@@ -179,6 +179,81 @@
   @keyframes vnPulse{ 0%{box-shadow:0 0 0 0 rgba(160,40,50,.5);} 70%{box-shadow:0 0 0 14px rgba(160,40,50,0);} 100%{box-shadow:0 0 0 0 rgba(160,40,50,0);} }
   #vnHint{ font-size:.65rem; color:var(--silver); text-align:center; }
 
+  /* ---------- BINGO ---------- */
+  #bingoStatus{ text-align:center; padding:10px; font-size:.85rem; color:var(--gold-soft); flex:none; }
+  #bingoBoard{
+    display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; width:min(90vw, 340px);
+    margin:10px auto; flex:none;
+  }
+  .bingoCell{
+    aspect-ratio:1/1; background:rgba(20,27,56,0.85); border:1px solid rgba(217,179,120,0.25);
+    border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:.95rem; color:var(--moonlight); cursor:pointer;
+  }
+  .bingoCell.marked{ background:rgba(217,179,120,0.25); color:var(--gold); border-color:var(--gold); }
+
+  /* ---------- BUCKET LIST ---------- */
+  #blList{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .blItem{
+    display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px;
+    background:linear-gradient(155deg, rgba(20,27,56,0.9), rgba(13,18,38,0.9));
+    border:1px solid rgba(217,179,120,0.2);
+  }
+  .blCheck{
+    width:22px; height:22px; border-radius:50%; border:1.5px solid var(--gold); flex:none;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--gold); font-size:.75rem;
+  }
+  .blText{ flex:1; color:var(--moonlight); font-size:.85rem; font-family:'Jost',sans-serif; }
+  .blItem.done .blText{ opacity:.45; text-decoration:line-through; }
+  .blDel{ background:none; border:none; color:var(--silver); font-size:.9rem; cursor:pointer; opacity:.6; }
+  #blAddBar{
+    flex:none; display:flex; gap:8px; padding:12px 16px 24px; border-top:1px solid rgba(217,179,120,0.15);
+  }
+  #blInput{
+    flex:1; padding:10px 14px; border-radius:20px; border:1px solid rgba(217,179,120,0.3);
+    background:rgba(20,27,56,0.7); color:var(--moonlight); font-family:'Jost',sans-serif; font-size:.85rem;
+  }
+  #blAddBtn{
+    width:42px; height:42px; border-radius:50%; border:none; background:var(--gold);
+    color:#1a1424; font-size:1.1rem; cursor:pointer;
+  }
+
+  /* ---------- CALENDAR ---------- */
+  #calList{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .calItem{
+    padding:12px 14px; border-radius:14px;
+    background:linear-gradient(155deg, rgba(20,27,56,0.9), rgba(13,18,38,0.9));
+    border:1px solid rgba(217,179,120,0.2); display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .calMeta{ flex:1; min-width:0; }
+  .calTitle{ color:var(--moonlight); font-size:.85rem; font-family:'Jost',sans-serif; }
+  .calSub{ font-size:.65rem; color:var(--gold-soft); margin-top:3px; }
+  .calDel{ background:none; border:none; color:var(--silver); font-size:.9rem; cursor:pointer; opacity:.6; flex:none; }
+  #calAddBar{
+    flex:none; display:flex; flex-direction:column; gap:8px; padding:12px 16px 24px; border-top:1px solid rgba(217,179,120,0.15);
+  }
+  #calTitle, #calDate{
+    padding:10px 14px; border-radius:14px; border:1px solid rgba(217,179,120,0.3);
+    background:rgba(20,27,56,0.7); color:var(--moonlight); font-family:'Jost',sans-serif; font-size:.8rem;
+  }
+  #calAddBtn{
+    padding:10px; border-radius:14px; border:none; background:var(--gold); color:#1a1424;
+    font-family:'Jost',sans-serif; font-size:.8rem; cursor:pointer;
+  }
+
+  /* ---------- DRAWING BOARD ---------- */
+  #drawPalette{ flex:none; display:flex; gap:10px; align-items:center; justify-content:center; padding:12px; }
+  .drawColor{ width:28px; height:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); cursor:pointer; }
+  .drawColor.active{ border-color:#fff; }
+  #drawClearBtn{
+    margin-left:8px; padding:6px 14px; border-radius:16px; border:1px solid rgba(217,179,120,0.35);
+    background:none; color:var(--gold); font-family:'Jost',sans-serif; font-size:.7rem; cursor:pointer;
+  }
+  #drawCanvas{
+    flex:1; margin:0 12px 16px; border-radius:16px; border:1px solid rgba(217,179,120,0.25);
+    background:rgba(10,13,28,0.6); touch-action:none;
+  }
+
   #msgs{ flex:1 1 auto; overflow-y:auto; padding:16px 12px; z-index:2; -webkit-overflow-scrolling:touch; min-height:0; }
   .empty{ text-align:center; color:var(--silver); font-family:'Cormorant Garamond',serif; font-style:italic; opacity:.8; margin-top:40px; }
   .row{ display:flex; margin-bottom:10px; padding:0 4px; }
@@ -370,7 +445,22 @@
         <span class="ghIcon">&#9995;</span>
         <span class="ghName">Rock Paper Scissors</span>
       </button>
-      <div class="ghCard ghSoon"><span class="ghIcon">&#127918;</span><span class="ghName">More games coming soon</span></div>
+      <button class="ghCard" data-game="bingo">
+        <span class="ghIcon">&#127922;</span>
+        <span class="ghName">Bingo</span>
+      </button>
+      <button class="ghCard" data-game="bucketlist">
+        <span class="ghIcon">&#127919;</span>
+        <span class="ghName">Bucket List</span>
+      </button>
+      <button class="ghCard" data-game="calendar">
+        <span class="ghIcon">&#128197;</span>
+        <span class="ghName">Calendar &amp; Reminders</span>
+      </button>
+      <button class="ghCard" data-game="drawing">
+        <span class="ghIcon">&#127912;</span>
+        <span class="ghName">Drawing Board</span>
+      </button>
     </div>
   </div>
 
@@ -398,6 +488,56 @@
     </div>
     <div id="rpsReveal"></div>
     <button id="rpsResetBtn" class="ghResetBtn">New round</button>
+  </div>
+
+  <div id="bingoGame" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Bingo</div>
+      <button class="iconBtn" id="bingoCloseBtn">&#10005;</button>
+    </div>
+    <div id="bingoStatus"></div>
+    <div id="bingoBoard"></div>
+    <button id="bingoResetBtn" class="ghResetBtn">New board</button>
+  </div>
+
+  <div id="bucketList" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Bucket List</div>
+      <button class="iconBtn" id="blCloseBtn">&#10005;</button>
+    </div>
+    <div id="blList"></div>
+    <div id="blAddBar">
+      <input id="blInput" type="text" placeholder="Add a dream together..." />
+      <button id="blAddBtn">&#10148;</button>
+    </div>
+  </div>
+
+  <div id="calendarScreen" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Calendar &amp; Reminders</div>
+      <button class="iconBtn" id="calCloseBtn">&#10005;</button>
+    </div>
+    <div id="calList"></div>
+    <div id="calAddBar">
+      <input id="calTitle" type="text" placeholder="What's the reminder?" />
+      <input id="calDate" type="datetime-local" />
+      <button id="calAddBtn">Add reminder</button>
+    </div>
+  </div>
+
+  <div id="drawingBoard" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">Drawing Board</div>
+      <button class="iconBtn" id="drawCloseBtn">&#10005;</button>
+    </div>
+    <div id="drawPalette">
+      <button class="drawColor" data-color="#d9b378" style="background:#d9b378;"></button>
+      <button class="drawColor" data-color="#e9e4f0" style="background:#e9e4f0;"></button>
+      <button class="drawColor" data-color="#a02832" style="background:#a02832;"></button>
+      <button class="drawColor" data-color="#5f7a9e" style="background:#5f7a9e;"></button>
+      <button id="drawClearBtn">Clear</button>
+    </div>
+    <canvas id="drawCanvas"></canvas>
   </div>
 
   <div id="voiceNotes" class="gameScreen">
@@ -565,15 +705,34 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
   const gamesHubEl = document.getElementById('gamesHub');
   const tttEl = document.getElementById('ticTacToe');
   const rpsEl = document.getElementById('rpsGame');
+  const bingoEl = document.getElementById('bingoGame');
+  const blEl = document.getElementById('bucketList');
+  const calEl = document.getElementById('calendarScreen');
+  const drawEl = document.getElementById('drawingBoard');
   let tttListenerRef = null;
   let rpsListenerRef = null;
+  let bingoListenerRef = null;
+  let blListenerRef = null;
+  let calListenerRef = null;
+  let drawAddedRef = null, drawRemovedRef = null;
 
   function closeAllGameScreens(){
     gamesHubEl.classList.remove('show');
     tttEl.classList.remove('show');
     rpsEl.classList.remove('show');
+    bingoEl.classList.remove('show');
+    blEl.classList.remove('show');
+    calEl.classList.remove('show');
+    drawEl.classList.remove('show');
+    vnEl.classList.remove('show');
     if(tttListenerRef){ tttListenerRef.off('value'); tttListenerRef = null; }
     if(rpsListenerRef){ rpsListenerRef.off('value'); rpsListenerRef = null; }
+    if(bingoListenerRef){ bingoListenerRef.off('value'); bingoListenerRef = null; }
+    if(blListenerRef){ blListenerRef.off('value'); blListenerRef = null; }
+    if(calListenerRef){ calListenerRef.off('value'); calListenerRef = null; }
+    if(drawAddedRef){ drawAddedRef.off('child_added'); drawAddedRef = null; }
+    if(drawRemovedRef){ drawRemovedRef.off('child_removed'); drawRemovedRef = null; }
+    if(vnListenerRef){ vnListenerRef.off('value'); vnListenerRef = null; }
   }
 
   document.getElementById('gamesBtn').addEventListener('click', function(){
@@ -589,6 +748,10 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
       gamesHubEl.classList.remove('show');
       if(game === 'tictactoe'){ openTicTacToe(); }
       else if(game === 'rps'){ openRps(); }
+      else if(game === 'bingo'){ openBingo(); }
+      else if(game === 'bucketlist'){ openBucketList(); }
+      else if(game === 'calendar'){ openCalendar(); }
+      else if(game === 'drawing'){ openDrawing(); }
     });
   });
 
@@ -730,6 +893,284 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     db.ref('games/rps').update({ choices: { Sahil: null, Ananya: null }, scored: false });
   });
 
+  /* ---- Bingo ---- */
+  const bingoStatusEl = document.getElementById('bingoStatus');
+  const bingoBoardEl = document.getElementById('bingoBoard');
+
+  function shuffledNumbers(){
+    const arr = Array.from({length:25}, function(_,i){ return i+1; });
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function openBingo(){
+    bingoEl.classList.add('show');
+    const ref = db.ref('games/bingo');
+    bingoListenerRef = ref;
+    ref.once('value').then(function(snap){
+      if(!snap.exists()){
+        ref.set({ board: shuffledNumbers(), marked: new Array(25).fill(false), winner: false });
+      }
+    });
+    ref.on('value', function(snap){
+      const state = snap.val();
+      if(!state) return;
+      renderBingo(state);
+    });
+  }
+
+  function bingoCheckWin(marked){
+    for(let r=0;r<5;r++){ if([0,1,2,3,4].every(function(c){ return marked[r*5+c]; })) return true; }
+    for(let c=0;c<5;c++){ if([0,1,2,3,4].every(function(r){ return marked[r*5+c]; })) return true; }
+    if([0,6,12,18,24].every(function(i){ return marked[i]; })) return true;
+    if([4,8,12,16,20].every(function(i){ return marked[i]; })) return true;
+    return false;
+  }
+
+  function renderBingo(state){
+    bingoBoardEl.innerHTML = '';
+    state.board.forEach(function(num, i){
+      const cell = document.createElement('div');
+      cell.className = 'bingoCell' + (state.marked[i] ? ' marked' : '');
+      cell.textContent = num;
+      cell.addEventListener('click', function(){
+        if(state.winner) return;
+        const newMarked = state.marked.slice();
+        newMarked[i] = !newMarked[i];
+        const won = bingoCheckWin(newMarked);
+        db.ref('games/bingo').update({ marked: newMarked, winner: won });
+      });
+      bingoBoardEl.appendChild(cell);
+    });
+    bingoStatusEl.textContent = state.winner ? 'BINGO! You both win! 🎉' : 'Mark numbers together to complete a line';
+  }
+
+  document.getElementById('bingoResetBtn').addEventListener('click', function(){
+    db.ref('games/bingo').set({ board: shuffledNumbers(), marked: new Array(25).fill(false), winner: false });
+  });
+
+  /* ---- Bucket List ---- */
+  const blListEl = document.getElementById('blList');
+  const blInput = document.getElementById('blInput');
+
+  function openBucketList(){
+    blEl.classList.add('show');
+    const ref = db.ref('bucketList');
+    blListenerRef = ref;
+    ref.on('value', renderBucketList);
+  }
+
+  function renderBucketList(snap){
+    const val = snap.val();
+    blListEl.innerHTML = '';
+    if(!val){
+      blListEl.innerHTML = '<div id="vnEmpty">No dreams added yet — add your first one 💫</div>';
+      return;
+    }
+    const entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
+    entries.sort(function(a,b){ if(!!a.done !== !!b.done) return a.done ? 1 : -1; return (a.ts||0)-(b.ts||0); });
+    entries.forEach(function(item){
+      const row = document.createElement('div');
+      row.className = 'blItem' + (item.done ? ' done' : '');
+      const check = document.createElement('div');
+      check.className = 'blCheck';
+      check.textContent = item.done ? '✓' : '';
+      check.addEventListener('click', function(){
+        db.ref('bucketList/' + item.id + '/done').set(!item.done);
+      });
+      const text = document.createElement('div');
+      text.className = 'blText';
+      text.textContent = item.text;
+      const del = document.createElement('button');
+      del.className = 'blDel';
+      del.textContent = '🗑';
+      del.addEventListener('click', function(){ db.ref('bucketList/' + item.id).remove(); });
+      row.appendChild(check); row.appendChild(text); row.appendChild(del);
+      blListEl.appendChild(row);
+    });
+  }
+
+  function addBucketItem(){
+    const text = blInput.value.trim();
+    if(!text) return;
+    db.ref('bucketList').push({ text: text, done: false, addedBy: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+    blInput.value = '';
+  }
+  document.getElementById('blAddBtn').addEventListener('click', addBucketItem);
+  blInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') addBucketItem(); });
+
+  /* ---- Calendar / Reminders ---- */
+  const calListEl = document.getElementById('calList');
+  const calTitleInput = document.getElementById('calTitle');
+  const calDateInput = document.getElementById('calDate');
+
+  function openCalendar(){
+    calEl.classList.add('show');
+    const ref = db.ref('reminders');
+    calListenerRef = ref;
+    ref.on('value', renderCalendar);
+  }
+
+  function reminderSub(ms){
+    const diff = ms - Date.now();
+    const d = new Date(ms);
+    const dateStr = d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }) +
+      ', ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+    if(diff < 0) return dateStr + ' · passed';
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    if(days > 0) return dateStr + ' · in ' + days + 'd';
+    if(hours > 0) return dateStr + ' · in ' + hours + 'h';
+    return dateStr + ' · soon';
+  }
+
+  function renderCalendar(snap){
+    const val = snap.val();
+    calListEl.innerHTML = '';
+    if(!val){
+      calListEl.innerHTML = '<div id="vnEmpty">No reminders yet — add one below</div>';
+      return;
+    }
+    const entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
+    entries.sort(function(a,b){ return (a.when||0)-(b.when||0); });
+    entries.forEach(function(item){
+      const row = document.createElement('div');
+      row.className = 'calItem';
+      const meta = document.createElement('div');
+      meta.className = 'calMeta';
+      meta.innerHTML = '<div class="calTitle">' + item.title + '</div><div class="calSub">' + reminderSub(item.when) + ' · added by ' + item.addedBy + '</div>';
+      const del = document.createElement('button');
+      del.className = 'calDel';
+      del.textContent = '🗑';
+      del.addEventListener('click', function(){ db.ref('reminders/' + item.id).remove(); });
+      row.appendChild(meta); row.appendChild(del);
+      calListEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('calAddBtn').addEventListener('click', function(){
+    const title = calTitleInput.value.trim();
+    const dateVal = calDateInput.value;
+    if(!title || !dateVal) return;
+    const when = new Date(dateVal).getTime();
+    db.ref('reminders').push({ title: title, when: when, addedBy: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+    calTitleInput.value = ''; calDateInput.value = '';
+  });
+
+  /* ---- Drawing Board ---- */
+  const drawCanvas = document.getElementById('drawCanvas');
+  const drawCtx = drawCanvas.getContext('2d');
+  let drawColor = '#d9b378';
+  let drawing = false;
+  let currentStroke = [];
+
+  document.querySelectorAll('.drawColor').forEach(function(btn, idx){
+    if(idx===0) btn.classList.add('active');
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.drawColor').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      drawColor = btn.getAttribute('data-color');
+    });
+  });
+
+  function sizeCanvas(){
+    const rect = drawCanvas.getBoundingClientRect();
+    drawCanvas.width = rect.width;
+    drawCanvas.height = rect.height;
+  }
+
+  function drawStrokeOnCanvas(stroke){
+    if(!stroke.points || stroke.points.length < 2) return;
+    drawCtx.strokeStyle = stroke.color || '#d9b378';
+    drawCtx.lineWidth = 3;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.beginPath();
+    stroke.points.forEach(function(p, i){
+      const x = p[0] * drawCanvas.width, y = p[1] * drawCanvas.height;
+      if(i===0) drawCtx.moveTo(x,y); else drawCtx.lineTo(x,y);
+    });
+    drawCtx.stroke();
+  }
+
+  let drawStrokesMap = {};
+  function redrawAllStrokes(){
+    drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+    Object.keys(drawStrokesMap).forEach(function(k){ drawStrokeOnCanvas(drawStrokesMap[k]); });
+  }
+
+  function openDrawing(){
+    drawEl.classList.add('show');
+    sizeCanvas();
+    drawStrokesMap = {};
+    drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+    const ref = db.ref('drawing/strokes');
+    drawAddedRef = ref; drawRemovedRef = ref;
+    ref.on('child_added', function(snap){
+      drawStrokesMap[snap.key] = snap.val();
+      drawStrokeOnCanvas(snap.val());
+    });
+    ref.on('child_removed', function(snap){
+      delete drawStrokesMap[snap.key];
+      redrawAllStrokes();
+    });
+  }
+
+  function drawPos(e){
+    const rect = drawCanvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function startDraw(e){
+    drawing = true;
+    currentStroke = [];
+    const p = drawPos(e);
+    currentStroke.push([p.x/drawCanvas.width, p.y/drawCanvas.height]);
+  }
+  function moveDraw(e){
+    if(!drawing) return;
+    const p = drawPos(e);
+    const prev = currentStroke[currentStroke.length-1];
+    currentStroke.push([p.x/drawCanvas.width, p.y/drawCanvas.height]);
+    drawCtx.strokeStyle = drawColor;
+    drawCtx.lineWidth = 3;
+    drawCtx.lineCap = 'round';
+    drawCtx.beginPath();
+    drawCtx.moveTo(prev[0]*drawCanvas.width, prev[1]*drawCanvas.height);
+    drawCtx.lineTo(p.x, p.y);
+    drawCtx.stroke();
+  }
+  function endDraw(){
+    if(!drawing) return;
+    drawing = false;
+    if(currentStroke.length > 1){
+      db.ref('drawing/strokes').push({ points: currentStroke, color: drawColor, addedBy: myName });
+    }
+    currentStroke = [];
+  }
+
+  drawCanvas.addEventListener('mousedown', startDraw);
+  drawCanvas.addEventListener('mousemove', moveDraw);
+  drawCanvas.addEventListener('mouseup', endDraw);
+  drawCanvas.addEventListener('mouseleave', endDraw);
+  drawCanvas.addEventListener('touchstart', function(e){ e.preventDefault(); startDraw(e); });
+  drawCanvas.addEventListener('touchmove', function(e){ e.preventDefault(); moveDraw(e); });
+  drawCanvas.addEventListener('touchend', function(e){ e.preventDefault(); endDraw(); });
+
+  document.getElementById('drawClearBtn').addEventListener('click', function(){
+    db.ref('drawing/strokes').remove();
+  });
+
+  document.getElementById('bingoCloseBtn').addEventListener('click', closeAllGameScreens);
+  document.getElementById('blCloseBtn').addEventListener('click', closeAllGameScreens);
+  document.getElementById('calCloseBtn').addEventListener('click', closeAllGameScreens);
+  document.getElementById('drawCloseBtn').addEventListener('click', closeAllGameScreens);
+
   /* ---------------- VOICE NOTES ---------------- */
   const vnEl = document.getElementById('voiceNotes');
   const vnListEl = document.getElementById('vnList');
@@ -754,13 +1195,6 @@ window.SLIDESHOW_IMAGES = ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
     if(vnListenerRef){ vnListenerRef.off('value'); vnListenerRef = null; }
     if(vnRecorder && vnRecorder.state === 'recording') vnRecorder.stop();
   });
-
-  const _prevCloseAllGameScreens = closeAllGameScreens;
-  closeAllGameScreens = function(){
-    _prevCloseAllGameScreens();
-    vnEl.classList.remove('show');
-    if(vnListenerRef){ vnListenerRef.off('value'); vnListenerRef = null; }
-  };
 
   function fmtTime(sec){
     const m = Math.floor(sec/60), s = Math.floor(sec%60);
