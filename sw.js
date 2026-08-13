@@ -1,5 +1,41 @@
-const CACHE_NAME = 'saan-cache-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE_NAME = 'saan-cache-v2';
+const APP_SHELL = ['/Saan-App/', '/Saan-App/index.html', '/Saan-App/manifest.json', '/Saan-App/icon-192.png', '/Saan-App/icon-512.png'];
+
+/* ---------------- FIREBASE CLOUD MESSAGING (background push) ---------------- */
+importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyDhXpwowPhfXdnBcXCHvtS2ZVYxpZNFfRM",
+  authDomain: "saan-app-3f55a.firebaseapp.com",
+  databaseURL: "https://saan-app-3f55a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "saan-app-3f55a",
+  storageBucket: "saan-app-3f55a.firebasestorage.app",
+  messagingSenderId: "212508232863",
+  appId: "1:212508232863:web:c2d5a1a5769f976aa926aa"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(function(payload){
+  const title = (payload.notification && payload.notification.title) || 'Saan';
+  const body = (payload.notification && payload.notification.body) || 'New message';
+  self.registration.showNotification(title, {
+    body: body,
+    icon: '/Saan-App/icon-192.png',
+    tag: 'saan-msg'
+  });
+});
+
+self.addEventListener('notificationclick', function(event){
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList){
+      for (const c of clientList) { if ('focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow('/Saan-App/');
+    })
+  );
+});
 
 self.addEventListener('install', function(event){
   self.skipWaiting();
