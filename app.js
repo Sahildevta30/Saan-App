@@ -131,6 +131,8 @@
     if(raceListenerRef){ raceListenerRef.off('value'); raceListenerRef = null; }
     if(flamListenerRef){ flamListenerRef.off('value'); flamListenerRef = null; }
     if(wpListenerRef){ wpListenerRef.off('value'); wpListenerRef = null; }
+    if(wpMiniChatRef){ wpMiniChatRef.off('value'); wpMiniChatRef = null; }
+    if(wpMiniChatEl) wpMiniChatEl.classList.remove('show');
     if(wpCdInterval){ clearInterval(wpCdInterval); wpCdInterval = null; }
     if(slListenerRef){ slListenerRef.off('value'); slListenerRef = null; }
     if(ludoListenerRef){ ludoListenerRef.off('value'); ludoListenerRef = null; }
@@ -142,10 +144,35 @@
 
   document.getElementById('gamesBtn').addEventListener('click', function(){
     gamesHubEl.classList.add('show');
+    showCategoryHome();
   });
   document.getElementById('gamesCloseBtn').addEventListener('click', closeAllGameScreens);
   document.getElementById('tttCloseBtn').addEventListener('click', closeAllGameScreens);
   document.getElementById('rpsCloseBtn').addEventListener('click', closeAllGameScreens);
+
+  /* ---- Category navigation ---- */
+  const categoryListEl = document.getElementById('categoryList');
+  const catBackBtn = document.getElementById('catBackBtn');
+  const ghTitleEl = document.getElementById('ghTitle');
+  const CAT_TITLES = { games:'Games & Fun', watch:'Watch Together', music:'Our Music', planner:'Our Planner', creative:'Creative Corner' };
+
+  function showCategoryHome(){
+    categoryListEl.style.display = 'flex';
+    document.querySelectorAll('.catSection').forEach(function(s){ s.style.display = 'none'; });
+    catBackBtn.style.visibility = 'hidden';
+    ghTitleEl.textContent = 'Together';
+  }
+  function showCategory(cat){
+    categoryListEl.style.display = 'none';
+    document.querySelectorAll('.catSection').forEach(function(s){ s.style.display = 'none'; });
+    document.getElementById('cat-' + cat).style.display = 'flex';
+    catBackBtn.style.visibility = 'visible';
+    ghTitleEl.textContent = CAT_TITLES[cat] || 'Together';
+  }
+  document.querySelectorAll('.catCard[data-cat]').forEach(function(card){
+    card.addEventListener('click', function(){ showCategory(card.getAttribute('data-cat')); });
+  });
+  catBackBtn.addEventListener('click', showCategoryHome);
 
   document.querySelectorAll('.ghCard[data-game]').forEach(function(card){
     card.addEventListener('click', function(){
@@ -167,6 +194,7 @@
       else if(game === 'ludo'){ openLudo(); }
       else if(game === 'carrom'){ openCarrom(); }
       else if(game === 'pool'){ openPool(); }
+      else if(game === 'voicenotes'){ openVoiceNotes(); }
     });
   });
 
@@ -1060,6 +1088,42 @@
   /* ---------------- WATCH PARTY ---------------- */
   document.getElementById('wpCloseBtn').addEventListener('click', closeAllGameScreens);
 
+  /* ---- Watch Party mini chat (mirrors main chat) ---- */
+  const wpMiniChatEl = document.getElementById('wpMiniChat');
+  const wpMiniMsgsEl = document.getElementById('wpMiniMsgs');
+  const wpMiniInput = document.getElementById('wpMiniInput');
+  let wpMiniChatRef = null;
+
+  document.getElementById('wpChatToggle').addEventListener('click', function(){
+    wpMiniChatEl.classList.toggle('show');
+    if(wpMiniChatEl.classList.contains('show') && !wpMiniChatRef){
+      wpMiniChatRef = db.ref('messages').limitToLast(30);
+      wpMiniChatRef.on('value', function(snap){
+        const val = snap.val();
+        wpMiniMsgsEl.innerHTML = '';
+        if(!val) return;
+        Object.keys(val).forEach(function(k){
+          const m = val[k];
+          const row = document.createElement('div');
+          row.className = 'wpMiniRow';
+          row.innerHTML = '<b>' + m.sender + ':</b> ' + (m.text || (m.fileName ? '📎 ' + m.fileName : ''));
+          wpMiniMsgsEl.appendChild(row);
+        });
+        wpMiniMsgsEl.scrollTop = wpMiniMsgsEl.scrollHeight;
+      });
+    }
+  });
+
+  function wpMiniSend(){
+    const text = wpMiniInput.value.trim();
+    if(!text) return;
+    db.ref('messages').push({ sender: myName, text: text, ts: Date.now() });
+    sendPush(otherPersonName(), myName, text);
+    wpMiniInput.value = '';
+  }
+  document.getElementById('wpMiniSendBtn').addEventListener('click', wpMiniSend);
+  wpMiniInput.addEventListener('keydown', function(e){ if(e.key==='Enter') wpMiniSend(); });
+
   const wpPanes = { youtube: document.getElementById('wpYoutube'), video: document.getElementById('wpVideo'), countdown: document.getElementById('wpCountdown') };
   let wpCurrentMode = 'youtube';
   document.querySelectorAll('.wpTab').forEach(function(tab){
@@ -1117,10 +1181,15 @@
         return;
       }
       wpYtPlayer = new YT.Player('wpYtPlayer', {
+        width: '100%', height: '100%',
         videoId: videoId,
-        playerVars: { playsinline: 1 },
+        playerVars: { playsinline: 1, rel: 0 },
         events: {
           onReady: function(){ wpYtReady = true; },
+          onError: function(e){
+            document.getElementById('wpYtErr').textContent = 'Could not load this video (it may not allow embedding). Try a different link.';
+            document.getElementById('wpYtErr').style.display = 'block';
+          },
           onStateChange: function(e){
             if(e.data === YT.PlayerState.PLAYING) wpWriteState({ playing: true, position: wpYtPlayer.getCurrentTime() });
             else if(e.data === YT.PlayerState.PAUSED) wpWriteState({ playing: false, position: wpYtPlayer.getCurrentTime() });
@@ -1133,7 +1202,8 @@
   document.getElementById('wpYtAddBtn').addEventListener('click', function(){
     const url = document.getElementById('wpYtInput').value.trim();
     const vid = wpParseYoutubeId(url);
-    if(!vid){ alert('Paste a valid YouTube link.'); return; }
+    document.getElementById('wpYtErr').style.display = 'none';
+    if(!vid){ document.getElementById('wpYtErr').textContent = "That doesn't look like a YouTube link."; document.getElementById('wpYtErr').style.display = 'block'; return; }
     db.ref('watchParty').set({ mode: 'youtube', youtubeId: vid, playing: false, position: 0, updatedBy: myName, updatedAt: firebase.database.ServerValue.TIMESTAMP });
   });
 
@@ -2043,13 +2113,12 @@
   let vnStartTs = 0;
   let vnTimerInt = null;
 
-  document.getElementById('voiceNotesBtn').addEventListener('click', function(){
-    closeAllGameScreens();
+  function openVoiceNotes(){
     vnEl.classList.add('show');
     const ref = db.ref('voiceNotes');
     vnListenerRef = ref;
     ref.on('value', renderVoiceNotes);
-  });
+  }
   document.getElementById('vnCloseBtn').addEventListener('click', function(){
     vnEl.classList.remove('show');
     if(vnListenerRef){ vnListenerRef.off('value'); vnListenerRef = null; }
