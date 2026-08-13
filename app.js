@@ -148,6 +148,19 @@
     if(!myName) return;
     db.ref('activity/'+dateKey(new Date())).set(true);
   }
+  let streakShowingTotal = false;
+  let streakCache = { streak: 0, total: 0 };
+  function renderStreakStrip(){
+    const el = document.getElementById('streakStrip');
+    if(!el) return;
+    if(streakShowingTotal){
+      el.innerHTML = '<span class="flame">&#10024;</span>' + streakCache.total + ' day' + (streakCache.total===1?'':'s') + ' together on Saan &mdash; tap to see streak';
+    } else if(streakCache.streak>0){
+      el.innerHTML = '<span class="flame">&#128293;</span>'+streakCache.streak+' day'+(streakCache.streak>1?'s':'')+' streak &mdash; tap for total days';
+    } else {
+      el.innerHTML = '<span class="flame">&#128293;</span>say something today to start your streak!';
+    }
+  }
   function updateStreak(){
     db.ref('activity').once('value').then(function(snap){
       const val = snap.val() || {};
@@ -158,15 +171,19 @@
         if(!val[dateKey(y)]){ streak = 0; }
       }
       while(val[dateKey(d)]){ streak++; d.setDate(d.getDate()-1); }
-      const el = document.getElementById('streakStrip');
-      if(!el) return;
-      if(streak>0){
-        el.innerHTML = '<span class="flame">&#128293;</span>'+streak+' day'+(streak>1?'s':'')+' streak &mdash; keep it going!';
-      } else {
-        el.innerHTML = '<span class="flame">&#128293;</span>say something today to start your streak!';
-      }
+      streakCache.streak = streak;
+      streakCache.total = Object.keys(val).length;
+      streakShowingTotal = false;
+      renderStreakStrip();
     });
   }
+  document.getElementById('streakStrip').addEventListener('click', function(){
+    streakShowingTotal = !streakShowingTotal;
+    renderStreakStrip();
+    const el = document.getElementById('streakStrip');
+    el.style.transform = 'scale(1.04)';
+    setTimeout(function(){ el.style.transform = 'scale(1)'; }, 150);
+  });
 
   document.getElementById('gamesBtn').addEventListener('click', function(){
     gamesHubEl.classList.add('show');

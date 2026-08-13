@@ -109,7 +109,7 @@
   .streakStrip{
     margin:14px 18px 0; text-align:center; font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--gold-soft);
     font-size:.92rem; padding:12px; border:1px solid rgba(217,179,120,0.2); border-radius:12px; background:rgba(217,179,120,0.05);
-    flex:none;
+    flex:none; cursor:pointer; transition:transform .15s ease;
   }
   .streakStrip .flame{ font-size:1.4rem; display:block; margin-bottom:3px; }
   .catCard{
