@@ -142,6 +142,32 @@
     if(poolRafId){ cancelAnimationFrame(poolRafId); poolRafId = null; }
   }
 
+  /* ---- Streak ---- */
+  function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function logActivityToday(){
+    if(!myName) return;
+    db.ref('activity/'+dateKey(new Date())).set(true);
+  }
+  function updateStreak(){
+    db.ref('activity').once('value').then(function(snap){
+      const val = snap.val() || {};
+      let streak = 0;
+      let d = new Date();
+      if(!val[dateKey(d)]){
+        const y = new Date(d); y.setDate(y.getDate()-1);
+        if(!val[dateKey(y)]){ streak = 0; }
+      }
+      while(val[dateKey(d)]){ streak++; d.setDate(d.getDate()-1); }
+      const el = document.getElementById('streakStrip');
+      if(!el) return;
+      if(streak>0){
+        el.innerHTML = '<span class="flame">&#128293;</span>'+streak+' day'+(streak>1?'s':'')+' streak &mdash; keep it going!';
+      } else {
+        el.innerHTML = '<span class="flame">&#128293;</span>say something today to start your streak!';
+      }
+    });
+  }
+
   document.getElementById('gamesBtn').addEventListener('click', function(){
     gamesHubEl.classList.add('show');
     showCategoryHome();
@@ -161,6 +187,8 @@
     document.querySelectorAll('.catSection').forEach(function(s){ s.style.display = 'none'; });
     catBackBtn.style.visibility = 'hidden';
     ghTitleEl.textContent = 'Together';
+    document.getElementById('streakStrip').style.display = 'block';
+    updateStreak();
   }
   function showCategory(cat){
     categoryListEl.style.display = 'none';
@@ -168,6 +196,7 @@
     document.getElementById('cat-' + cat).style.display = 'flex';
     catBackBtn.style.visibility = 'visible';
     ghTitleEl.textContent = CAT_TITLES[cat] || 'Together';
+    document.getElementById('streakStrip').style.display = 'none';
   }
   document.querySelectorAll('.catCard[data-cat]').forEach(function(card){
     card.addEventListener('click', function(){ showCategory(card.getAttribute('data-cat')); });
@@ -1118,6 +1147,7 @@
     const text = wpMiniInput.value.trim();
     if(!text) return;
     db.ref('messages').push({ sender: myName, text: text, ts: Date.now() });
+    logActivityToday();
     sendPush(otherPersonName(), myName, text);
     wpMiniInput.value = '';
   }
@@ -2211,6 +2241,7 @@
               duration: durationSec,
               ts: firebase.database.ServerValue.TIMESTAMP
             });
+            logActivityToday();
           }
         };
         reader.readAsDataURL(blob);
@@ -2336,6 +2367,7 @@
       textInput.value=''; textInput.style.height='auto';
       pendingFile=null; pendingPreview.classList.remove('show'); fileInput.value='';
       clearTypingNow();
+      logActivityToday();
       sendPush(otherPersonName(), myName, msg.text || (msg.fileName ? '📎 ' + msg.fileName : 'New message'));
     }catch(e){
       alert('Message could not be sent — check your internet and try again.');

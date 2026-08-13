@@ -106,6 +106,12 @@
 
   /* ---------- CATEGORY HOME ---------- */
   #catBackBtn{ visibility:hidden; }
+  .streakStrip{
+    margin:14px 18px 0; text-align:center; font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--gold-soft);
+    font-size:.92rem; padding:12px; border:1px solid rgba(217,179,120,0.2); border-radius:12px; background:rgba(217,179,120,0.05);
+    flex:none;
+  }
+  .streakStrip .flame{ font-size:1.4rem; display:block; margin-bottom:3px; }
   .catCard{
     display:flex; align-items:center; gap:16px; padding:18px 18px; border-radius:18px;
     background:linear-gradient(155deg, rgba(217,179,120,0.14), rgba(13,18,38,0.9));
