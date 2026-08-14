@@ -2830,10 +2830,12 @@
   }
 
   function showInCallUI(withWhom, statusText, type){
+    inCallEl.classList.remove('minimized');
     inCallEl.classList.add('show');
     callName.textContent = withWhom;
     callStatus.textContent = statusText;
     document.getElementById('callTimer').textContent = '';
+    document.getElementById('callPipLabel').textContent = withWhom;
     if(type==='audio'){ remoteVideo.style.display='none'; } else { remoteVideo.style.display='block'; }
   }
 
@@ -2846,8 +2848,17 @@
       const ss = String(secs%60).padStart(2,'0');
       const t = document.getElementById('callTimer');
       if(t) t.textContent = mm+':'+ss;
+      const pt = document.getElementById('callPipTimer');
+      if(pt) pt.textContent = mm+':'+ss;
     }, 1000);
   }
+
+  document.getElementById('minimizeCallBtn').addEventListener('click', function(){
+    inCallEl.classList.add('minimized');
+  });
+  document.getElementById('callPipExpandBtn').addEventListener('click', function(){
+    inCallEl.classList.remove('minimized');
+  });
 
   function toggleMute(){
     if(!localStream) return;
@@ -2896,6 +2907,7 @@
   function cleanupCallUI(){
     incomingCallEl.classList.remove('show');
     inCallEl.classList.remove('show');
+    inCallEl.classList.remove('minimized');
     document.getElementById('tapToHear').classList.remove('show');
     if(callTimerInterval){ clearInterval(callTimerInterval); callTimerInterval=null; }
     callStartTime = null;

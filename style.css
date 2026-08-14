@@ -519,6 +519,27 @@
     flex-direction:column; align-items:center; justify-content:center;
   }
   #inCall.show{ display:flex; }
+  #callPipExpandBtn{ display:none; }
+
+  #inCall.minimized{
+    inset:auto; top:70px; left:12px; bottom:auto; width:auto; height:auto;
+    background:none; pointer-events:none;
+  }
+  #inCall.minimized #remoteVideo,
+  #inCall.minimized #localVideo,
+  #inCall.minimized #voiceAvatarWrap,
+  #inCall.minimized #callTop,
+  #inCall.minimized .inCallControls,
+  #inCall.minimized #tapToHear{ display:none !important; }
+  #inCall.minimized #callPipExpandBtn{
+    display:flex; align-items:center; gap:8px; pointer-events:auto;
+    padding:10px 16px; border-radius:30px; border:1px solid rgba(217,179,120,0.45);
+    background:rgba(15,20,40,0.95); box-shadow:0 6px 20px rgba(0,0,0,0.5); color:var(--moonlight);
+    font-family:'Jost',sans-serif; font-size:.78rem; cursor:pointer;
+  }
+  #callPipDot{ width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px #4ade80; animation:pipPulse 1.4s infinite; flex:none; }
+  @keyframes pipPulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  #callPipTimer{ color:var(--gold-soft); font-size:.72rem; }
   #remoteVideo{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0; background:#0a0a10; }
   #localVideo{
     position:absolute; top:56px; right:16px; width:92px; height:130px; border-radius:12px; object-fit:cover;
