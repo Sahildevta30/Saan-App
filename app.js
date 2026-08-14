@@ -131,6 +131,7 @@
     if(raceListenerRef){ raceListenerRef.off('value'); raceListenerRef = null; }
     if(flamListenerRef){ flamListenerRef.off('value'); flamListenerRef = null; }
     if(wpListenerRef){ wpListenerRef.off('value'); wpListenerRef = null; }
+    if(wpReactionsRef){ wpReactionsRef.off('value'); wpReactionsRef = null; }
     if(wpMiniChatRef){ wpMiniChatRef.off('value'); wpMiniChatRef = null; }
     if(wpMiniChatEl) wpMiniChatEl.classList.remove('show');
     if(wpCdInterval){ clearInterval(wpCdInterval); wpCdInterval = null; }
@@ -1171,6 +1172,34 @@
   document.getElementById('wpMiniSendBtn').addEventListener('click', wpMiniSend);
   wpMiniInput.addEventListener('keydown', function(e){ if(e.key==='Enter') wpMiniSend(); });
 
+  /* ---- Watch Together: quick call button ---- */
+  document.getElementById('wpCallBtn').addEventListener('click', function(){
+    startOutgoingCall('audio');
+  });
+
+  /* ---- Watch Together: live emoji reactions ---- */
+  const wpReactionLayerEl = document.getElementById('wpReactionLayer');
+  let wpReactionsRef = null;
+  let wpLastReactionTs = 0;
+
+  function wpSpawnEmoji(emoji){
+    const el = document.createElement('div');
+    el.className = 'wpFloatEmoji';
+    el.textContent = emoji;
+    el.style.left = (10 + Math.random()*70) + '%';
+    el.style.bottom = '80px';
+    wpReactionLayerEl.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 2500);
+  }
+
+  document.querySelectorAll('.wpReactBtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const emoji = btn.getAttribute('data-emoji');
+      wpSpawnEmoji(emoji);
+      db.ref('watchParty/reaction').set({ emoji: emoji, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+    });
+  });
+
   const wpPanes = { youtube: document.getElementById('wpYoutube'), video: document.getElementById('wpVideo'), countdown: document.getElementById('wpCountdown') };
   let wpCurrentMode = 'youtube';
   document.querySelectorAll('.wpTab').forEach(function(tab){
@@ -1190,6 +1219,14 @@
       const state = snap.val();
       if(!state) return;
       handleWpState(state);
+    });
+    wpReactionsRef = db.ref('watchParty/reaction');
+    wpReactionsRef.on('value', function(snap){
+      const r = snap.val();
+      if(!r || !r.ts) return;
+      if(r.ts === wpLastReactionTs) return;
+      wpLastReactionTs = r.ts;
+      if(r.by !== myName) wpSpawnEmoji(r.emoji);
     });
   }
 
@@ -1222,9 +1259,17 @@
   }
 
   function wpCreateYtPlayer(videoId){
+    document.getElementById('wpYtErr').style.display = 'none';
+    const loadTimeout = setTimeout(function(){
+      if(!wpYtReady){
+        document.getElementById('wpYtErr').textContent = "Video is taking too long to load. Try: close this app, clear your browser cache/site data for this app, and reopen — you may be on an old cached version.";
+        document.getElementById('wpYtErr').style.display = 'block';
+      }
+    }, 8000);
     wpEnsureYtApi(function(){
       if(wpYtPlayer){
         wpYtPlayer.loadVideoById(videoId);
+        clearTimeout(loadTimeout);
         return;
       }
       wpYtPlayer = new YT.Player('wpYtPlayer', {
@@ -1232,8 +1277,9 @@
         videoId: videoId,
         playerVars: { playsinline: 1, rel: 0 },
         events: {
-          onReady: function(){ wpYtReady = true; },
+          onReady: function(){ wpYtReady = true; clearTimeout(loadTimeout); document.getElementById('wpYtErr').style.display = 'none'; },
           onError: function(e){
+            clearTimeout(loadTimeout);
             document.getElementById('wpYtErr').textContent = 'Could not load this video (it may not allow embedding). Try a different link.';
             document.getElementById('wpYtErr').style.display = 'block';
           },

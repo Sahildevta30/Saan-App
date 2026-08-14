@@ -132,6 +132,27 @@
     background:var(--gold); border:none; color:#1a1424; font-size:1.2rem; cursor:pointer;
     box-shadow:0 4px 14px rgba(0,0,0,0.4);
   }
+  #wpCallBtn{
+    position:absolute; right:16px; bottom:150px; z-index:5; width:46px; height:46px; border-radius:50%;
+    background:var(--maroon-bright); border:none; color:#fff; font-size:1.15rem; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  }
+  #wpReactionBar{
+    position:absolute; left:12px; bottom:96px; z-index:5; display:flex; flex-direction:column; gap:8px;
+  }
+  .wpReactBtn{
+    width:40px; height:40px; border-radius:50%; border:1px solid rgba(217,179,120,0.35);
+    background:rgba(10,13,28,0.8); font-size:1.15rem; cursor:pointer;
+  }
+  #wpReactionLayer{ position:absolute; inset:0; pointer-events:none; z-index:4; overflow:hidden; }
+  .wpFloatEmoji{
+    position:absolute; font-size:1.8rem; animation:wpFloatUp 2.4s ease-out forwards;
+  }
+  @keyframes wpFloatUp{
+    0%{ opacity:0; transform:translateY(0) scale(.6); }
+    15%{ opacity:1; transform:translateY(-30px) scale(1.1); }
+    100%{ opacity:0; transform:translateY(-260px) scale(1); }
+  }
   #wpMiniChat{
     display:none; flex-direction:column; position:absolute; right:12px; bottom:150px; left:12px;
     max-height:38vh; background:rgba(10,13,28,0.96); border:1px solid rgba(217,179,120,0.3);
