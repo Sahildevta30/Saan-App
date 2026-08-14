@@ -1727,13 +1727,13 @@
     const cx = carromW/2, cy = carromH/2;
     const r = Math.min(carromW,carromH) * 0.028;
     const pieces = [];
-    pieces.push({ id:'queen', x:cx, y:cy, vx:0, vy:0, r:r*1.05, color:'#c23a54', active:true });
+    pieces.push({ id:'queen', x:cx, y:cy, vx:0, vy:0, r:r*1.05, color:'#c23a54', active:true, scored:false });
     const ringR = r*2.3;
     for(let i=0;i<8;i++){
       const ang = (i/8)*Math.PI*2;
       pieces.push({
         id: 'c'+i, x: cx+ringR*Math.cos(ang), y: cy+ringR*Math.sin(ang),
-        vx:0, vy:0, r:r, color: (i%2===0)?'#1a1424':'#f6eeda', active:true,
+        vx:0, vy:0, r:r, color: (i%2===0)?'#1a1424':'#f6eeda', active:true, scored:false,
         colorName: (i%2===0)?'black':'white'
       });
     }
@@ -1843,8 +1843,9 @@
   carromCanvas.addEventListener('touchend', function(e){ e.preventDefault(); carromReleaseAim(); });
 
   function carromStartAim(e){
-    db.ref('games/carrom/turn').once('value').then(function(snap){
-      if(snap.val() !== myName || carromShotRunning) return;
+    db.ref('games/carrom').once('value').then(function(snap){
+      const state = snap.val();
+      if(!state || state.turn !== myName || state.winner || carromShotRunning) return;
       const striker = carromPieces.find(function(p){ return p.isStriker; });
       if(!striker) return;
       const pos = carromPointerPos(e);
@@ -1910,7 +1911,8 @@
       }
 
       carromPieces.forEach(function(p){
-        if(p.active || p.isStriker) return;
+        if(p.active || p.isStriker || p.scored) return;
+        p.scored = true;
         if(p.id === 'queen'){
           queenPending = true;
           scores[myName] += 3;
@@ -1934,7 +1936,7 @@
       }
 
       const finalCoins = carromPieces.map(function(p){
-        return { id:p.id, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, isStriker:!!p.isStriker, colorName:p.colorName||null };
+        return { id:p.id, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, scored:!!p.scored, isStriker:!!p.isStriker, colorName:p.colorName||null };
       });
 
       const updates = {
@@ -1993,7 +1995,7 @@
         const baseColor = POOL_COLORS[(n>=9? n-9 : n-1) % 7];
         pieces.push({
           id:'b'+n, num:n, x: apexX + row*(r*1.8), y: apexY - row*r + col*r*2,
-          vx:0, vy:0, r:r, color: (n===8)?'#111':baseColor, active:true,
+          vx:0, vy:0, r:r, color: (n===8)?'#111':baseColor, active:true, scored:false,
           group: (n===8)?'eight':(isStripe?'stripe':'solid'), isStripe: isStripe
         });
       }
@@ -2102,8 +2104,9 @@
   poolCanvas.addEventListener('touchend', function(e){ e.preventDefault(); poolReleaseAim(); });
 
   function poolStartAim(e){
-    db.ref('games/pool/turn').once('value').then(function(snap){
-      if(snap.val() !== myName || poolShotRunning) return;
+    db.ref('games/pool').once('value').then(function(snap){
+      const state = snap.val();
+      if(!state || state.turn !== myName || state.winner || poolShotRunning) return;
       const cue = poolPieces.find(function(p){ return p.isCue; });
       if(!cue || !cue.active) return;
       const pos = poolPointerPos(e);
@@ -2158,7 +2161,8 @@
       }
 
       poolPieces.forEach(function(p){
-        if(p.active || p.isCue) return;
+        if(p.active || p.isCue || p.scored) return;
+        p.scored = true;
         if(p.group === 'eight'){
           const myGroup = assignedGroup[myName];
           const myRemaining = poolPieces.filter(function(x){ return x.group===myGroup && x.active; }).length;
@@ -2177,7 +2181,7 @@
       if(potted8Early) winner = otherPersonName();
 
       const finalBalls = poolPieces.map(function(p){
-        return { id:p.id, num:p.num||null, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, isCue:!!p.isCue, isStripe:!!p.isStripe, group:p.group||null };
+        return { id:p.id, num:p.num||null, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, scored:!!p.scored, isCue:!!p.isCue, isStripe:!!p.isStripe, group:p.group||null };
       });
 
       const updates = {
