@@ -16,6 +16,23 @@
   }
   #app{ position:relative; height:100vh; height:100dvh; width:100vw; overflow:hidden; }
 
+  /* ---------- DESKTOP / TABLET: centered "phone" frame ---------- */
+  @media (min-width: 820px){
+    body{
+      display:flex; align-items:center; justify-content:center;
+      background:radial-gradient(ellipse at center, #171f42 0%, #05060d 75%);
+    }
+    #app{
+      width:min(480px, 96vw); height:min(900px, 96vh); height:min(900px, 96dvh);
+      border-radius:28px; box-shadow:0 30px 90px rgba(0,0,0,0.65), 0 0 0 1px rgba(217,179,120,0.15);
+      overflow:hidden; transform:translateZ(0);
+    }
+    #slideshow, #slideDim, .stars{ border-radius:28px; }
+  }
+  @media (min-width: 820px) and (max-height: 700px){
+    #app{ height:96vh; height:96dvh; }
+  }
+
   /* ---------- SLIDESHOW BACKGROUND ---------- */
   #slideshow{ position:fixed; inset:0; z-index:0; overflow:hidden; }
   #slideshow img{
