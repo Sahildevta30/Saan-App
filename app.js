@@ -33,6 +33,27 @@
   }
   makeStars(document.getElementById('starsBg'), 40);
 
+  /* ---------- TOASTS + OFFLINE ---------- */
+  function showToast(message, type){
+    const stack = document.getElementById('toastStack');
+    if(!stack) return;
+    const t = document.createElement('div');
+    t.className = 'toast' + (type==='error' ? ' error' : '');
+    t.textContent = message;
+    stack.appendChild(t);
+    setTimeout(function(){
+      t.style.transition = 'opacity .3s ease';
+      t.style.opacity = '0';
+      setTimeout(function(){ t.remove(); }, 320);
+    }, 3200);
+  }
+  db.ref('.info/connected').on('value', function(snap){
+    const bar = document.getElementById('offlineBar');
+    if(!bar) return;
+    if(snap.val() === true) bar.classList.remove('show');
+    else bar.classList.add('show');
+  });
+
   const loginEl = document.getElementById('login');
   const chatEl = document.getElementById('chat');
   const hiName = document.getElementById('hiName');
@@ -501,7 +522,7 @@
       const del = document.createElement('button');
       del.className = 'blDel';
       del.textContent = '🗑';
-      del.addEventListener('click', function(){ db.ref('bucketList/' + item.id).remove(); });
+      del.addEventListener('click', function(){ if(confirm('Remove this from the bucket list?')) db.ref('bucketList/' + item.id).remove(); });
       row.appendChild(check); row.appendChild(text); row.appendChild(del);
       blListEl.appendChild(row);
     });
@@ -559,7 +580,7 @@
       const del = document.createElement('button');
       del.className = 'calDel';
       del.textContent = '🗑';
-      del.addEventListener('click', function(){ db.ref('reminders/' + item.id).remove(); });
+      del.addEventListener('click', function(){ if(confirm('Delete this reminder?')) db.ref('reminders/' + item.id).remove(); });
       row.appendChild(meta); row.appendChild(del);
       calListEl.appendChild(row);
     });
@@ -677,7 +698,7 @@
   drawCanvas.addEventListener('touchend', function(e){ e.preventDefault(); endDraw(); });
 
   document.getElementById('drawClearBtn').addEventListener('click', function(){
-    db.ref('drawing/strokes').remove();
+    if(confirm('Clear the whole drawing?')) db.ref('drawing/strokes').remove();
   });
 
   document.getElementById('bingoCloseBtn').addEventListener('click', closeAllGameScreens);
@@ -720,7 +741,7 @@
       hdr.innerHTML = '<span>' + (item.type==='playlist'?'📀 Playlist':'🎵 Track') + ' · added by ' + item.addedBy + '</span>';
       const del = document.createElement('button');
       del.className = 'songDel'; del.textContent = '🗑';
-      del.addEventListener('click', function(){ db.ref('songs/' + item.id).remove(); });
+      del.addEventListener('click', function(){ if(confirm('Remove this song from the playlist?')) db.ref('songs/' + item.id).remove(); });
       hdr.appendChild(del);
       const iframe = document.createElement('iframe');
       iframe.src = 'https://open.spotify.com/embed/' + item.spotifyType + '/' + item.spotifyId + '?utm_source=generator&theme=0';
@@ -738,7 +759,7 @@
     if(!url) return;
     const parsed = parseSpotifyLink(url);
     if(!parsed){
-      alert('That doesn\'t look like a Spotify link. Open Spotify → Share → Copy link, then paste it here.');
+      showToast("That doesn't look like a Spotify link. Open Spotify → Share → Copy link.", 'error');
       return;
     }
     db.ref('songs').push({
@@ -788,11 +809,11 @@
       const words = state.words || [];
       const lastWord = words.length ? words[words.length-1].word : null;
       if(lastWord && word[0] !== lastWord[lastWord.length-1]){
-        alert('Word must start with "' + lastWord[lastWord.length-1].toUpperCase() + '"');
+        showToast('Word must start with "' + lastWord[lastWord.length-1].toUpperCase() + '"', 'error');
         return;
       }
       if(words.some(function(w){ return w.word === word; })){
-        alert('Word already used!');
+        showToast('Word already used!', 'error');
         return;
       }
       words.push({ word: word, by: myName });
@@ -1282,6 +1303,19 @@
     return m ? m[1] : null;
   }
 
+  function wpSetupMediaSession(title){
+    if(!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: title || 'Watching together',
+      artist: 'Saan — Watch Together',
+      artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }]
+    });
+    try{
+      navigator.mediaSession.setActionHandler('play', function(){ if(wpYtPlayer) wpYtPlayer.playVideo(); });
+      navigator.mediaSession.setActionHandler('pause', function(){ if(wpYtPlayer) wpYtPlayer.pauseVideo(); });
+    }catch(e){ /* some browsers reject unsupported handlers */ }
+  }
+
   function wpCreateYtPlayer(videoId){
     document.getElementById('wpYtErr').style.display = 'none';
     const loadTimeout = setTimeout(function(){
@@ -1301,15 +1335,26 @@
         videoId: videoId,
         playerVars: { playsinline: 1, rel: 0 },
         events: {
-          onReady: function(){ wpYtReady = true; clearTimeout(loadTimeout); document.getElementById('wpYtErr').style.display = 'none'; },
+          onReady: function(){
+            wpYtReady = true; clearTimeout(loadTimeout); document.getElementById('wpYtErr').style.display = 'none';
+            wpSetupMediaSession();
+          },
           onError: function(e){
             clearTimeout(loadTimeout);
             document.getElementById('wpYtErr').textContent = 'Could not load this video (it may not allow embedding). Try a different link.';
             document.getElementById('wpYtErr').style.display = 'block';
           },
           onStateChange: function(e){
-            if(e.data === YT.PlayerState.PLAYING) wpWriteState({ playing: true, position: wpYtPlayer.getCurrentTime() });
-            else if(e.data === YT.PlayerState.PAUSED) wpWriteState({ playing: false, position: wpYtPlayer.getCurrentTime() });
+            if(e.data === YT.PlayerState.PLAYING){
+              wpWriteState({ playing: true, position: wpYtPlayer.getCurrentTime() });
+              if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+              const data = wpYtPlayer.getVideoData ? wpYtPlayer.getVideoData() : null;
+              if(data && data.title) wpSetupMediaSession(data.title);
+            }
+            else if(e.data === YT.PlayerState.PAUSED){
+              wpWriteState({ playing: false, position: wpYtPlayer.getCurrentTime() });
+              if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+            }
           }
         }
       });
@@ -1811,7 +1856,7 @@
         db.ref('games/ludo/lastRoll').set(roll);
         ludoSelectedState = { state: state, roll: roll, options: movable };
         ludoStatusEl.textContent = 'Tap a token to move it';
-        alert('You have ' + movable.length + ' movable tokens. Tap the highlighted move: token ' + (movable[0]+1) + ' or ' + (movable[1]+1) + '. Moving token ' + (movable[0]+1) + '.');
+        showToast('You have multiple movable tokens — moving token ' + (movable[0]+1) + '.');
         ludoApplyMove(state, movable[0], roll);
       }
     });
@@ -2554,7 +2599,7 @@
         delBtn.className = 'vnDelBtn';
         delBtn.textContent = '🗑';
         delBtn.addEventListener('click', function(){
-          db.ref('voiceNotes/' + note.id).remove();
+          if(confirm('Delete this voice note?')) db.ref('voiceNotes/' + note.id).remove();
         });
         card.appendChild(delBtn);
       }
@@ -2603,7 +2648,7 @@
         if(sec >= 90){ vnRecorder.stop(); }
       }, 200);
     }catch(e){
-      alert('Microphone access needed to record a voice note.');
+      showToast('Microphone access needed to record a voice note.', 'error');
     }
   });
 
@@ -2673,7 +2718,7 @@
     const f = fileInput.files[0];
     if(!f) return;
     if(f.size > 1.5*1024*1024){
-      alert('For now please keep photos/audio/video under 1.5MB so they send smoothly.');
+      showToast('Please keep photos/audio/video under 1.5MB so they send smoothly.', 'error');
       fileInput.value=''; return;
     }
     const reader = new FileReader();
@@ -2718,7 +2763,7 @@
       logActivityToday();
       sendPush(otherPersonName(), myName, msg.text || (msg.fileName ? '📎 ' + msg.fileName : 'New message'));
     }catch(e){
-      alert('Message could not be sent — check your internet and try again.');
+      showToast('Message could not be sent — check your internet and try again.', 'error');
     }finally{
       sendBtn.disabled=false;
     }
@@ -3049,13 +3094,13 @@
   }
 
   async function startOutgoingCall(type){
-    if(pc){ alert('Already in a call.'); return; }
+    if(pc){ showToast('Already in a call.', 'error'); return; }
     const other = otherPersonName();
     processedCandidateKeys = {};
     try{
       localStream = await getMedia(type);
     }catch(e){
-      alert('Could not access camera/microphone. Please allow permission.');
+      showToast('Could not access camera/microphone. Please allow permission.', 'error');
       return;
     }
     currentCallType = type; iAmCaller = true;
@@ -3083,7 +3128,7 @@
     try{
       localStream = await getMedia(call.type);
     }catch(e){
-      alert('Could not access camera/microphone. Please allow permission.');
+      showToast('Could not access camera/microphone. Please allow permission.', 'error');
       endCall('declined'); return;
     }
     currentCallType = call.type; iAmCaller = false;
@@ -3140,6 +3185,25 @@
   document.getElementById('callPipExpandBtn').addEventListener('click', function(){
     inCallEl.classList.remove('minimized');
   });
+
+  const callPipBtn = document.getElementById('callPipBtn');
+  if(!('pictureInPictureEnabled' in document)){
+    callPipBtn.style.display = 'none';
+  } else {
+    callPipBtn.addEventListener('click', async function(){
+      try{
+        if(document.pictureInPictureElement){
+          await document.exitPictureInPicture();
+        } else if(remoteVideo.readyState >= 1){
+          await remoteVideo.requestPictureInPicture();
+        } else {
+          showToast('Video not ready for picture-in-picture yet.', 'error');
+        }
+      }catch(e){
+        showToast('Picture-in-picture is not available for this call right now.', 'error');
+      }
+    });
+  }
 
   function toggleMute(){
     if(!localStream) return;

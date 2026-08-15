@@ -56,6 +56,25 @@
   #loginError{ color:var(--gold-soft); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:.9rem; min-height:1.4em; margin-top:6px; }
   .foot{ margin-top:34px; font-size:.62rem; color:var(--gold); opacity:.5; max-width:260px; }
 
+  /* ---------- TOASTS + OFFLINE BAR ---------- */
+  #offlineBar{
+    display:none; position:fixed; top:0; left:0; right:0; z-index:80; text-align:center;
+    background:#7a1f33; color:#fff; font-size:.7rem; font-family:'Jost',sans-serif;
+    padding:7px; padding-top:calc(7px + env(safe-area-inset-top));
+  }
+  #offlineBar.show{ display:block; }
+  #toastStack{
+    position:fixed; left:12px; right:12px; bottom:20px; z-index:90; display:flex; flex-direction:column;
+    gap:8px; align-items:center; pointer-events:none;
+  }
+  .toast{
+    max-width:88%; padding:11px 18px; border-radius:22px; font-size:.8rem; font-family:'Jost',sans-serif;
+    background:rgba(15,20,40,0.96); color:var(--moonlight); border:1px solid rgba(217,179,120,0.35);
+    box-shadow:0 6px 20px rgba(0,0,0,0.4); text-align:center; animation:toastIn .25s ease;
+  }
+  .toast.error{ border-color:rgba(160,40,50,0.6); }
+  @keyframes toastIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
   /* ---------- CHAT ---------- */
   #chat{ position:absolute; inset:0; z-index:5; display:none; flex-direction:column; height:100%; }
   #chat.show{ display:flex; }
