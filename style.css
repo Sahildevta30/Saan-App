@@ -304,7 +304,8 @@
 
   /* ---------- SNAKE & LADDER ---------- */
   #slStatus{ text-align:center; padding:8px; font-size:.8rem; color:var(--gold-soft); flex:none; }
-  #slBoardWrap{ flex:1; display:flex; align-items:center; justify-content:center; padding:8px; min-height:0; }
+  #slBoardWrap{ flex:1; display:flex; align-items:center; justify-content:center; padding:8px; min-height:0; position:relative; }
+  #slOverlay{ position:absolute; pointer-events:none; z-index:1; }
   #slBoard{
     display:grid; grid-template-columns:repeat(10, 1fr); grid-template-rows:repeat(10, 1fr);
     width:min(92vw, 380px); height:min(92vw, 380px); border:2px solid rgba(217,179,120,0.4); border-radius:10px; overflow:hidden;
