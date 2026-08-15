@@ -1715,6 +1715,8 @@
   }
 
   slRollBtn.addEventListener('click', function(){
+    if(slRollBtn.disabled) return;
+    slRollBtn.disabled = true;
     db.ref('games/snakeladder').once('value').then(function(snap){
       const state = snap.val();
       if(!state || state.winner || state.turn !== myName) return;
@@ -1732,7 +1734,7 @@
       updates['turn'] = otherPersonName();
       if(newPos === 100) updates['winner'] = myName;
       db.ref('games/snakeladder').update(updates);
-    });
+    }).catch(function(){ slRollBtn.disabled = false; });
   });
   document.getElementById('slResetBtn').addEventListener('click', function(){
     db.ref('games/snakeladder').set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null });
@@ -1936,6 +1938,8 @@
   }
 
   ludoRollBtn.addEventListener('click', function(){
+    if(ludoRollBtn.disabled) return;
+    ludoRollBtn.disabled = true;
     db.ref('games/ludo').once('value').then(function(snap){
       const state = snap.val();
       if(!state || state.winner || state.turn !== myName) return;
@@ -1955,7 +1959,7 @@
         showToast('You have multiple movable tokens — moving token ' + (movable[0]+1) + '.');
         ludoApplyMove(state, movable[0], roll);
       }
-    });
+    }).catch(function(){ ludoRollBtn.disabled = false; });
   });
 
   function ludoApplyMove(state, tokenIdx, roll){
@@ -2841,9 +2845,12 @@
   });
   sendBtn.addEventListener('click', send);
 
+  let sendInProgress = false;
   async function send(){
+    if(sendInProgress) return;
     const text = textInput.value.trim();
     if(!text && !pendingFile) return;
+    sendInProgress = true;
     sendBtn.disabled = true;
     try{
       const msg = { sender: myName, text: text || '', ts: Date.now() };
@@ -2862,6 +2869,7 @@
       showToast('Message could not be sent — check your internet and try again.', 'error');
     }finally{
       sendBtn.disabled=false;
+      sendInProgress = false;
     }
   }
 
