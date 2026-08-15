@@ -48,9 +48,9 @@
         <div class="presence" id="otherPresence">&nbsp;</div>
       </div>
       <div class="hdr-right">
-        <button class="iconBtn" id="gamesBtn" title="Together">&#10024;</button>
-        <button class="iconBtn" id="voiceCallBtn" title="Voice call">&#128222;</button>
-        <button class="iconBtn" id="videoCallBtn" title="Video call">&#128249;</button>
+        <button class="iconBtn" id="gamesBtn" title="Together" aria-label="Together">&#10024;</button>
+        <button class="iconBtn" id="voiceCallBtn" title="Voice call" aria-label="Voice call">&#128222;</button>
+        <button class="iconBtn" id="videoCallBtn" title="Video call" aria-label="Video call">&#128249;</button>
         <button class="logoutBtn" id="logoutBtn">logout</button>
       </div>
     </div>
@@ -73,7 +73,7 @@
     <div class="ghHdr">
       <button class="iconBtn" id="catBackBtn" style="display:none;">&#8249;</button>
       <div class="brand" style="font-size:22px;" id="ghTitle">Together</div>
-      <button class="iconBtn" id="gamesCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="gamesCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div class="streakStrip" id="streakStrip"><span class="flame">&#128293;</span>&hellip;</div>
     <div class="ghList" id="categoryList">
@@ -192,7 +192,7 @@
   <div id="ticTacToe" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Tic Tac Toe</div>
-      <button class="iconBtn" id="tttCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="tttCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="tttStatus"></div>
     <div id="tttBoard"></div>
@@ -202,7 +202,7 @@
   <div id="rpsGame" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Rock Paper Scissors</div>
-      <button class="iconBtn" id="rpsCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="rpsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="rpsStatus"></div>
     <div id="rpsScore"></div>
@@ -218,7 +218,7 @@
   <div id="songsList" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Our Playlist</div>
-      <button class="iconBtn" id="songsCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="songsHint">Paste a Spotify song or playlist link — it plays right here, on your own Spotify.</div>
     <div id="songsListEl"></div>
@@ -231,7 +231,7 @@
   <div id="wordChain" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Word Chain</div>
-      <button class="iconBtn" id="wcCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="wcCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="wcStatus"></div>
     <div id="wcChain"></div>
@@ -244,7 +244,7 @@
   <div id="musicGuess" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Guess the Song</div>
-      <button class="iconBtn" id="mgCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="mgCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="mgBody"></div>
   </div>
@@ -252,7 +252,7 @@
   <div id="carRace" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Car Race</div>
-      <button class="iconBtn" id="raceCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="raceCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="raceStatus"></div>
     <canvas id="raceCanvas"></canvas>
@@ -267,7 +267,7 @@
   <div id="flamingo" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Flamingo</div>
-      <button class="iconBtn" id="flamCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="flamCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="flamCounter"></div>
     <div id="flamCard"><div id="flamQ"></div></div>
@@ -277,7 +277,7 @@
   <div id="snakeLadder" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Snake &amp; Ladder</div>
-      <button class="iconBtn" id="slCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="slCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="slStatus"></div>
     <div id="slBoardWrap"><div id="slBoard"></div><svg id="slOverlay"></svg></div>
@@ -291,7 +291,7 @@
   <div id="ludoGame" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Ludo</div>
-      <button class="iconBtn" id="ludoCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="ludoCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="ludoStatus"></div>
     <div id="ludoBoardWrap"><canvas id="ludoCanvas"></canvas></div>
@@ -305,7 +305,7 @@
   <div id="carromGame" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Carrom</div>
-      <button class="iconBtn" id="carromCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="carromCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="carromStatus"></div>
     <div id="carromScore"></div>
@@ -316,7 +316,7 @@
   <div id="poolGame" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">8 Ball Pool</div>
-      <button class="iconBtn" id="poolCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="poolCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="poolStatus"></div>
     <canvas id="poolCanvas"></canvas>
@@ -326,10 +326,25 @@
   <div id="watchParty" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Watch Together</div>
-      <button class="iconBtn" id="wpCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="wpCloseBtn" aria-label="Close">&#10005;</button>
+    </div>
+    <div id="wpPresenceRow">
+      <span id="wpPresenceDot"></span><span id="wpPresenceText">alone here</span>
     </div>
     <button id="wpChatToggle">&#128172;</button>
-    <button id="wpCallBtn" title="Voice call">&#128222;</button>
+    <button id="wpCallBtn" title="Voice call" aria-label="Voice call">&#128222;</button>
+    <button id="wpQueueToggle" title="Up next" aria-label="Up next">&#128203;</button>
+    <div id="wpQueuePanel">
+      <div class="ghHdr" style="padding:12px 14px;">
+        <div class="brand" style="font-size:16px;">Up Next</div>
+        <button class="iconBtn" id="wpQueueCloseBtn" aria-label="Close">&#10005;</button>
+      </div>
+      <div id="wpQueueList"></div>
+      <div id="wpAddBar">
+        <input id="wpQueueInput" type="text" placeholder="Paste YouTube link to queue..." />
+        <button id="wpQueueAddBtn">Add</button>
+      </div>
+    </div>
     <div id="wpReactionBar">
       <button class="wpReactBtn" data-emoji="&#10084;&#65039;">&#10084;&#65039;</button>
       <button class="wpReactBtn" data-emoji="&#128514;">&#128514;</button>
@@ -378,7 +393,7 @@
   <div id="bingoGame" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Bingo</div>
-      <button class="iconBtn" id="bingoCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="bingoCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="bingoStatus"></div>
     <div id="bingoBoard"></div>
@@ -388,7 +403,7 @@
   <div id="bucketList" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Bucket List</div>
-      <button class="iconBtn" id="blCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="blCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="blList"></div>
     <div id="blAddBar">
@@ -400,7 +415,7 @@
   <div id="calendarScreen" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Calendar &amp; Reminders</div>
-      <button class="iconBtn" id="calCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="calCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="calList"></div>
     <div id="calAddBar">
@@ -413,7 +428,7 @@
   <div id="drawingBoard" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Drawing Board</div>
-      <button class="iconBtn" id="drawCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="drawCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="drawPalette">
       <button class="drawColor" data-color="#d9b378" style="background:#d9b378;"></button>
@@ -428,7 +443,7 @@
   <div id="voiceNotes" class="gameScreen">
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Voice Notes</div>
-      <button class="iconBtn" id="vnCloseBtn">&#10005;</button>
+      <button class="iconBtn" id="vnCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="vnList"></div>
     <div id="vnRecBar">
@@ -458,12 +473,12 @@
       <div id="callTimer"></div>
     </div>
     <div class="inCallControls">
-      <div class="ctlWrap"><button class="ctlBtn" id="speakerBtn" title="Speaker">&#128266;</button><span class="ctlLabel">speaker</span></div>
-      <div class="ctlWrap"><button class="ctlBtn" id="camBtn" title="Camera">&#128249;</button><span class="ctlLabel">camera</span></div>
-      <div class="ctlWrap"><button class="ctlBtn" id="muteBtn" title="Mute">&#127908;</button><span class="ctlLabel">mute</span></div>
-      <div class="ctlWrap"><button class="ctlBtn" id="callPipBtn" title="Picture in picture">&#128470;</button><span class="ctlLabel">pip</span></div>
-      <div class="ctlWrap"><button class="ctlBtn" id="minimizeCallBtn" title="Minimize">&#8681;</button><span class="ctlLabel">minimize</span></div>
-      <div class="ctlWrap"><button class="ctlBtn end" id="endCallBtn" title="End call">&#128222;</button><span class="ctlLabel">end</span></div>
+      <div class="ctlWrap"><button class="ctlBtn" id="speakerBtn" title="Speaker" aria-label="Speaker">&#128266;</button><span class="ctlLabel">speaker</span></div>
+      <div class="ctlWrap"><button class="ctlBtn" id="camBtn" title="Camera" aria-label="Camera">&#128249;</button><span class="ctlLabel">camera</span></div>
+      <div class="ctlWrap"><button class="ctlBtn" id="muteBtn" title="Mute" aria-label="Mute">&#127908;</button><span class="ctlLabel">mute</span></div>
+      <div class="ctlWrap"><button class="ctlBtn" id="callPipBtn" title="Picture in picture" aria-label="Picture in picture">&#128470;</button><span class="ctlLabel">pip</span></div>
+      <div class="ctlWrap"><button class="ctlBtn" id="minimizeCallBtn" title="Minimize" aria-label="Minimize">&#8681;</button><span class="ctlLabel">minimize</span></div>
+      <div class="ctlWrap"><button class="ctlBtn end" id="endCallBtn" title="End call" aria-label="End call">&#128222;</button><span class="ctlLabel">end</span></div>
     </div>
     <button id="tapToHear">&#128264; tap to hear them</button>
     <button id="callPipExpandBtn">

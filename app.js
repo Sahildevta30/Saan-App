@@ -153,6 +153,9 @@
     if(flamListenerRef){ flamListenerRef.off('value'); flamListenerRef = null; }
     if(wpListenerRef){ wpListenerRef.off('value'); wpListenerRef = null; }
     if(wpReactionsRef){ wpReactionsRef.off('value'); wpReactionsRef = null; }
+    if(wpPresenceRef){ wpPresenceRef.off('value'); wpPresenceRef = null; if(myName) db.ref('watchParty/presence/' + myName).set(false); }
+    if(wpQueueRef){ wpQueueRef.off('value'); wpQueueRef = null; }
+    document.getElementById('wpQueuePanel').classList.remove('show');
     if(wpMiniChatRef){ wpMiniChatRef.off('value'); wpMiniChatRef = null; }
     if(wpMiniChatEl) wpMiniChatEl.classList.remove('show');
     if(wpCdInterval){ clearInterval(wpCdInterval); wpCdInterval = null; }
@@ -225,6 +228,7 @@
     backBtn.className = 'iconBtn backToHubBtn';
     backBtn.innerHTML = '&#8249;';
     backBtn.title = 'Back';
+    backBtn.setAttribute('aria-label', 'Back');
     backBtn.addEventListener('click', backToHub);
     hdr.insertBefore(backBtn, hdr.firstChild);
   });
@@ -1225,6 +1229,7 @@
   /* ---- Watch Together: live emoji reactions ---- */
   const wpReactionLayerEl = document.getElementById('wpReactionLayer');
   let wpReactionsRef = null;
+  let wpQueueRef = null;
   let wpLastReactionTs = 0;
 
   function wpSpawnEmoji(emoji){
@@ -1256,6 +1261,7 @@
     });
   });
 
+  let wpPresenceRef = null;
   function openWatchParty(){
     wpEl.classList.add('show');
     const ref = db.ref('watchParty');
@@ -1273,6 +1279,24 @@
       wpLastReactionTs = r.ts;
       if(r.by !== myName) wpSpawnEmoji(r.emoji);
     });
+
+    db.ref('watchParty/presence/' + myName).set(true);
+    db.ref('watchParty/presence/' + myName).onDisconnect().set(false);
+    wpPresenceRef = db.ref('watchParty/presence/' + otherPersonName());
+    wpPresenceRef.on('value', function(snap){
+      const dot = document.getElementById('wpPresenceDot');
+      const txt = document.getElementById('wpPresenceText');
+      if(snap.val()){
+        dot.classList.add('online');
+        txt.textContent = otherPersonName() + ' is watching too';
+      } else {
+        dot.classList.remove('online');
+        txt.textContent = 'waiting for ' + otherPersonName() + '\u2026';
+      }
+    });
+
+    wpQueueRef = db.ref('watchParty/queue');
+    wpQueueRef.on('value', function(snap){ renderWpQueue(snap.val()); });
   }
 
   let wpLastWriteTs = 0;
@@ -1301,6 +1325,54 @@
   function wpParseYoutubeId(url){
     const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
     return m ? m[1] : null;
+  }
+
+  /* ---- Watch Together: Up Next queue ---- */
+  document.getElementById('wpQueueToggle').addEventListener('click', function(){
+    document.getElementById('wpQueuePanel').classList.add('show');
+  });
+  document.getElementById('wpQueueCloseBtn').addEventListener('click', function(){
+    document.getElementById('wpQueuePanel').classList.remove('show');
+  });
+  document.getElementById('wpQueueAddBtn').addEventListener('click', function(){
+    const input = document.getElementById('wpQueueInput');
+    const vid = wpParseYoutubeId(input.value.trim());
+    if(!vid){ showToast("That doesn't look like a YouTube link.", 'error'); return; }
+    db.ref('watchParty/queue').push({ youtubeId: vid, addedBy: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+    input.value = '';
+    showToast('Added to queue');
+  });
+
+  function renderWpQueue(val){
+    const listEl = document.getElementById('wpQueueList');
+    listEl.innerHTML = '';
+    if(!val){ listEl.innerHTML = '<div id="vnEmpty">Queue is empty — add a video below</div>'; return; }
+    const entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
+    entries.sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
+    entries.forEach(function(item){
+      const row = document.createElement('div');
+      row.className = 'wpQueueItem';
+      const thumb = document.createElement('img');
+      thumb.className = 'wpQueueThumb';
+      thumb.src = 'https://img.youtube.com/vi/' + item.youtubeId + '/default.jpg';
+      const title = document.createElement('div');
+      title.className = 'wpQueueTitle';
+      title.textContent = 'Added by ' + item.addedBy;
+      const playBtn = document.createElement('button');
+      playBtn.className = 'wpQueuePlayBtn';
+      playBtn.textContent = 'Play';
+      playBtn.addEventListener('click', function(){
+        db.ref('watchParty').update({ mode:'youtube', youtubeId: item.youtubeId, playing:false, position:0, updatedBy:myName, updatedAt:firebase.database.ServerValue.TIMESTAMP });
+        db.ref('watchParty/queue/' + item.id).remove();
+        document.getElementById('wpQueuePanel').classList.remove('show');
+      });
+      const delBtn = document.createElement('button');
+      delBtn.className = 'wpQueueDelBtn';
+      delBtn.textContent = '🗑';
+      delBtn.addEventListener('click', function(){ db.ref('watchParty/queue/' + item.id).remove(); });
+      row.appendChild(thumb); row.appendChild(title); row.appendChild(playBtn); row.appendChild(delBtn);
+      listEl.appendChild(row);
+    });
   }
 
   function wpSetupMediaSession(title){
@@ -1354,6 +1426,18 @@
             else if(e.data === YT.PlayerState.PAUSED){
               wpWriteState({ playing: false, position: wpYtPlayer.getCurrentTime() });
               if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+            }
+            else if(e.data === YT.PlayerState.ENDED){
+              db.ref('watchParty/queue').once('value').then(function(snap){
+                const val = snap.val();
+                if(!val) return;
+                const entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
+                entries.sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
+                if(entries.length === 0) return;
+                const next = entries[0];
+                db.ref('watchParty').update({ mode:'youtube', youtubeId: next.youtubeId, playing:true, position:0, updatedBy:myName, updatedAt:firebase.database.ServerValue.TIMESTAMP });
+                db.ref('watchParty/queue/' + next.id).remove();
+              });
             }
           }
         }
