@@ -410,8 +410,14 @@
 
       if(result !== 'draw' && !state.scored){
         const winnerName2 = (result === 'a') ? 'Sahil' : 'Ananya';
-        db.ref('games/rps').update({ scored: true });
-        db.ref('games/rps/score/' + winnerName2).transaction(function(v){ return (v||0) + 1; });
+        db.ref('games/rps/scored').transaction(function(cur){
+          if(cur) return; // already scored by the other client — abort
+          return true;
+        }, function(err, committed){
+          if(committed){
+            db.ref('games/rps/score/' + winnerName2).transaction(function(v){ return (v||0) + 1; });
+          }
+        });
       }
     } else if(mine){
       rpsRevealEl.textContent = '';
@@ -477,10 +483,16 @@
       cell.textContent = num;
       cell.addEventListener('click', function(){
         if(state.winner) return;
-        const newMarked = state.marked.slice();
-        newMarked[i] = !newMarked[i];
-        const won = bingoCheckWin(newMarked);
-        db.ref('games/bingo').update({ marked: newMarked, winner: won });
+        db.ref('games/bingo/marked').transaction(function(currentMarked){
+          const arr = (currentMarked || state.marked).slice();
+          arr[i] = !arr[i];
+          return arr;
+        }, function(err, committed, snap){
+          if(committed && snap){
+            const arr = snap.val();
+            if(bingoCheckWin(arr)) db.ref('games/bingo/winner').set(true);
+          }
+        });
       });
       bingoBoardEl.appendChild(cell);
     });
@@ -807,7 +819,7 @@
   function submitWord(){
     db.ref('games/wordchain').once('value').then(function(snap){
       const state = snap.val() || { words: [], turn: 'Sahil' };
-      if(state.turn !== myName) return;
+      if(state.turn !== myName){ showToast("It's " + otherPersonName() + "'s turn", 'error'); return; }
       const word = wcInput.value.trim().toLowerCase();
       if(!word) return;
       const words = state.words || [];
