@@ -5,6 +5,10 @@
     --moonlight:#f6eeda; --silver:#b8b9c7;
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--gold, #d9b378); outline-offset:2px; border-radius:4px;
+  }
+  a:focus-visible{ outline:2px solid var(--gold, #d9b378); outline-offset:2px; }
   html,body{ margin:0; padding:0; height:100%; overflow:hidden; }
   body{
     font-family:'Jost',sans-serif; color:var(--moonlight);
