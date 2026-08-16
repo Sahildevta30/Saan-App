@@ -1,21 +1,23 @@
 (function(){
-  /* ---------- slideshow ---------- */
+  /* ---------- slideshow (lazy: only 2 images decoded at a time) ---------- */
   (function(){
     const imgs = window.SLIDESHOW_IMAGES || [];
     const wrap = document.getElementById('slideshow');
     if(!imgs.length) return;
-    imgs.forEach(function(src, i){
-      const el = document.createElement('img');
-      el.src = src;
-      if(i===0) el.className='on';
-      wrap.appendChild(el);
-    });
-    let idx = 0;
+    const elA = document.createElement('img');
+    const elB = document.createElement('img');
+    elA.src = imgs[0]; elA.className = 'on';
+    elA.loading = 'eager'; elB.loading = 'lazy';
+    wrap.appendChild(elA); wrap.appendChild(elB);
+    let idx = 0, showingA = true;
     setInterval(function(){
-      const all = wrap.querySelectorAll('img');
-      all[idx].classList.remove('on');
-      idx = (idx+1) % all.length;
-      all[idx].classList.add('on');
+      idx = (idx+1) % imgs.length;
+      const next = showingA ? elB : elA;
+      const cur = showingA ? elA : elB;
+      next.src = imgs[idx];
+      next.className = 'on';
+      cur.className = '';
+      showingA = !showingA;
     }, 6000);
   })();
 
@@ -1969,7 +1971,6 @@
     else if(tok.homeSteps > 0){ tok.homeSteps += roll; }
     else {
       tok.pos += roll;
-      if(tok.pos >= LUDO_TRACK_LEN - LUDO_START[myName] % LUDO_TRACK_LEN){ }
       if(tok.pos >= 51){ tok.homeSteps = tok.pos - 51; tok.pos = 51; }
     }
     const updates = {};
