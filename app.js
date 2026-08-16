@@ -1297,16 +1297,22 @@
     db.ref('watchParty/presence/' + myName).set(true);
     db.ref('watchParty/presence/' + myName).onDisconnect().set(false);
     wpPresenceRef = db.ref('watchParty/presence/' + otherPersonName());
+    let wpPresenceKnown = null;
     wpPresenceRef.on('value', function(snap){
       const dot = document.getElementById('wpPresenceDot');
       const txt = document.getElementById('wpPresenceText');
-      if(snap.val()){
+      const isOnline = !!snap.val();
+      if(isOnline){
         dot.classList.add('online');
         txt.textContent = otherPersonName() + ' is watching too';
       } else {
         dot.classList.remove('online');
         txt.textContent = 'waiting for ' + otherPersonName() + '\u2026';
       }
+      if(wpPresenceKnown !== null && wpPresenceKnown !== isOnline){
+        showToast(otherPersonName() + (isOnline ? ' joined the party 🎬' : ' left the party'));
+      }
+      wpPresenceKnown = isOnline;
     });
 
     wpQueueRef = db.ref('watchParty/queue');
