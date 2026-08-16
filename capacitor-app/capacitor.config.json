@@ -1,0 +1,20 @@
+{
+  "appId": "app.saan.couple",
+  "appName": "Saan",
+  "webDir": "www",
+  "server": {
+    "url": "https://sahildevta30.github.io/Saan-App/",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#05060d"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#05060d",
+      "androidSplashResourceName": "splash"
+    }
+  }
+}

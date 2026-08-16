@@ -1,0 +1,14 @@
+{
+  "name": "saan-app",
+  "version": "1.0.0",
+  "description": "Saan - private couple app (Capacitor Android wrapper)",
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}
