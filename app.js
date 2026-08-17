@@ -455,18 +455,55 @@
 
   function openRps(){
     rpsEl.classList.add('show');
-    const ref = db.ref('games/rps');
-    rpsListenerRef = ref;
-    ref.once('value').then(function(snap){
-      if(!snap.exists()){
-        ref.set({ choices: { Sahil: null, Ananya: null }, score: { Sahil: 0, Ananya: 0 } });
-      }
+    rpsSetMode(false);
+  }
+
+  document.getElementById('rpsModeTogether').addEventListener('click', function(){ rpsSetMode(false); });
+  document.getElementById('rpsModeSolo').addEventListener('click', function(){ rpsSetMode(true); });
+
+  let rpsSoloMode = false;
+  let rpsSoloState = { myChoice: null, cpuChoice: null, myScore: 0, cpuScore: 0 };
+
+  function rpsSetMode(solo){
+    rpsSoloMode = solo;
+    document.getElementById('rpsModeTogether').classList.toggle('active', !solo);
+    document.getElementById('rpsModeSolo').classList.toggle('active', solo);
+    if(rpsListenerRef){ rpsListenerRef.off('value'); rpsListenerRef = null; }
+    if(solo){
+      rpsSoloState = { myChoice: null, cpuChoice: null, myScore: 0, cpuScore: 0 };
+      rpsRenderSolo();
+    } else {
+      const ref = db.ref('games/rps');
+      rpsListenerRef = ref;
+      ref.once('value').then(function(snap){
+        if(!snap.exists()){
+          ref.set({ choices: { Sahil: null, Ananya: null }, score: { Sahil: 0, Ananya: 0 } });
+        }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        renderRps(state);
+      });
+    }
+  }
+
+  function rpsRenderSolo(){
+    rpsScoreEl.textContent = 'You ' + rpsSoloState.myScore + '  —  ' + rpsSoloState.cpuScore + ' Computer';
+    document.querySelectorAll('.rpsBtn').forEach(function(btn){
+      btn.classList.toggle('picked', rpsSoloState.myChoice === btn.getAttribute('data-choice'));
     });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      renderRps(state);
-    });
+    if(rpsSoloState.myChoice && rpsSoloState.cpuChoice){
+      const iconOf = { rock:'✊', paper:'✋', scissors:'✌️' };
+      const result = rpsOutcome(rpsSoloState.myChoice, rpsSoloState.cpuChoice);
+      let line = 'You ' + iconOf[rpsSoloState.myChoice] + '  vs  ' + iconOf[rpsSoloState.cpuChoice] + ' Computer — ';
+      line += (result==='draw') ? "it's a draw!" : (result==='a' ? 'you win!' : 'computer wins!');
+      rpsRevealEl.textContent = line;
+      rpsStatusEl.textContent = 'Tap "New round" to play again';
+    } else {
+      rpsRevealEl.textContent = '';
+      rpsStatusEl.textContent = 'Pick your move';
+    }
   }
 
   function rpsOutcome(a, b){
@@ -521,12 +558,29 @@
 
   document.querySelectorAll('.rpsBtn').forEach(function(btn){
     btn.addEventListener('click', function(){
-      db.ref('games/rps/choices/' + myName).set(btn.getAttribute('data-choice'));
+      const choice = btn.getAttribute('data-choice');
+      if(rpsSoloMode){
+        if(rpsSoloState.myChoice) return;
+        const opts = ['rock','paper','scissors'];
+        rpsSoloState.myChoice = choice;
+        rpsSoloState.cpuChoice = opts[Math.floor(Math.random()*3)];
+        const result = rpsOutcome(rpsSoloState.myChoice, rpsSoloState.cpuChoice);
+        if(result === 'a') rpsSoloState.myScore++;
+        else if(result === 'b') rpsSoloState.cpuScore++;
+        rpsRenderSolo();
+      } else {
+        db.ref('games/rps/choices/' + myName).set(choice);
+      }
     });
   });
 
   document.getElementById('rpsResetBtn').addEventListener('click', function(){
-    db.ref('games/rps').update({ choices: { Sahil: null, Ananya: null }, scored: false });
+    if(rpsSoloMode){
+      rpsSoloState.myChoice = null; rpsSoloState.cpuChoice = null;
+      rpsRenderSolo();
+    } else {
+      db.ref('games/rps').update({ choices: { Sahil: null, Ananya: null }, scored: false });
+    }
   });
 
   /* ---- Bingo ---- */

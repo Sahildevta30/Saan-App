@@ -213,6 +213,8 @@
 
   #tttModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
   #tttModeRow .wpTab{ flex:1; }
+  #rpsModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
+  #rpsModeRow .wpTab{ flex:1; }
   #tttStatus, #rpsStatus{
     text-align:center; padding:10px; font-size:.85rem; color:var(--gold-soft); flex:none;
   }
