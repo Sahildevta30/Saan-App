@@ -224,6 +224,15 @@
     gamesHubEl.classList.add('show');
     showCategoryHome();
   }
+  document.querySelectorAll('.gameScreen, #gamesHub').forEach(function(scr){
+    scr.setAttribute('role', 'dialog');
+    scr.setAttribute('aria-modal', 'true');
+  });
+  const inCallDialog = document.getElementById('inCall');
+  if(inCallDialog){ inCallDialog.setAttribute('role','dialog'); inCallDialog.setAttribute('aria-modal','true'); }
+  const incomingCallDialog = document.getElementById('incomingCall');
+  if(incomingCallDialog){ incomingCallDialog.setAttribute('role','dialog'); incomingCallDialog.setAttribute('aria-modal','true'); }
+
   document.querySelectorAll('.gameScreen .ghHdr').forEach(function(hdr){
     if(hdr.querySelector('.backToHubBtn')) return;
     const backBtn = document.createElement('button');
@@ -299,24 +308,44 @@
   /* ---- Tic Tac Toe ---- */
   const tttStatusEl = document.getElementById('tttStatus');
   const tttBoardEl = document.getElementById('tttBoard');
+  let tttSoloMode = false;
+  let tttSoloBoard = ['','','','','','','','',''];
+  let tttSoloWinner = null;
 
   function mySymbol(){ return myName === 'Sahil' ? 'X' : 'O'; }
   function theirSymbol(){ return myName === 'Sahil' ? 'O' : 'X'; }
 
   function openTicTacToe(){
     tttEl.classList.add('show');
-    const ref = db.ref('games/tictactoe');
-    tttListenerRef = ref;
-    ref.once('value').then(function(snap){
-      if(!snap.exists()){
-        ref.set({ board: ['','','','','','','','',''], turn: 'X', winner: null });
-      }
-    });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      renderTtt(state);
-    });
+    tttSetMode(false);
+  }
+
+  document.getElementById('tttModeTogether').addEventListener('click', function(){ tttSetMode(false); });
+  document.getElementById('tttModeSolo').addEventListener('click', function(){ tttSetMode(true); });
+
+  function tttSetMode(solo){
+    tttSoloMode = solo;
+    document.getElementById('tttModeTogether').classList.toggle('active', !solo);
+    document.getElementById('tttModeSolo').classList.toggle('active', solo);
+    if(tttListenerRef){ tttListenerRef.off('value'); tttListenerRef = null; }
+    if(solo){
+      tttSoloBoard = ['','','','','','','','',''];
+      tttSoloWinner = null;
+      tttRenderSolo();
+    } else {
+      const ref = db.ref('games/tictactoe');
+      tttListenerRef = ref;
+      ref.once('value').then(function(snap){
+        if(!snap.exists()){
+          ref.set({ board: ['','','','','','','','',''], turn: 'X', winner: null });
+        }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        renderTtt(state);
+      });
+    }
   }
 
   function tttWinner(board){
@@ -326,6 +355,60 @@
     }
     if(board.every(function(c){ return c; })) return 'draw';
     return null;
+  }
+
+  /* Minimax — unbeatable computer opponent for solo play */
+  function tttMinimax(board, isMaximizing){
+    const w = tttWinner(board);
+    if(w === 'O') return 10;
+    if(w === 'X') return -10;
+    if(w === 'draw') return 0;
+    if(isMaximizing){
+      let best = -Infinity;
+      board.forEach(function(c,i){ if(!c){ board[i]='O'; best = Math.max(best, tttMinimax(board,false)); board[i]=''; } });
+      return best;
+    } else {
+      let best = Infinity;
+      board.forEach(function(c,i){ if(!c){ board[i]='X'; best = Math.min(best, tttMinimax(board,true)); board[i]=''; } });
+      return best;
+    }
+  }
+  function tttComputerMove(board){
+    let bestScore = -Infinity, bestMove = -1;
+    board.forEach(function(c,i){
+      if(!c){
+        board[i]='O';
+        const score = tttMinimax(board, false);
+        board[i]='';
+        if(score > bestScore){ bestScore = score; bestMove = i; }
+      }
+    });
+    return bestMove;
+  }
+
+  function tttRenderSolo(){
+    tttBoardEl.innerHTML = '';
+    tttSoloBoard.forEach(function(cell, i){
+      const div = document.createElement('div');
+      div.className = 'tttCell' + (cell==='X' ? ' x' : cell==='O' ? ' o' : '');
+      div.textContent = cell;
+      div.addEventListener('click', function(){
+        if(tttSoloWinner || cell) return;
+        tttSoloBoard[i] = 'X';
+        tttSoloWinner = tttWinner(tttSoloBoard);
+        if(!tttSoloWinner){
+          const move = tttComputerMove(tttSoloBoard);
+          if(move !== -1) tttSoloBoard[move] = 'O';
+          tttSoloWinner = tttWinner(tttSoloBoard);
+        }
+        tttRenderSolo();
+      });
+      tttBoardEl.appendChild(div);
+    });
+    if(tttSoloWinner === 'draw'){ tttStatusEl.textContent = "It's a draw!"; }
+    else if(tttSoloWinner === 'X'){ tttStatusEl.textContent = 'You won! 🎉'; }
+    else if(tttSoloWinner === 'O'){ tttStatusEl.textContent = 'Computer won — try again!'; }
+    else { tttStatusEl.textContent = 'Your turn (you are X)'; }
   }
 
   function renderTtt(state){
@@ -356,7 +439,13 @@
   }
 
   document.getElementById('tttResetBtn').addEventListener('click', function(){
-    db.ref('games/tictactoe').set({ board: ['','','','','','','','',''], turn: 'X', winner: null });
+    if(tttSoloMode){
+      tttSoloBoard = ['','','','','','','','',''];
+      tttSoloWinner = null;
+      tttRenderSolo();
+    } else {
+      db.ref('games/tictactoe').set({ board: ['','','','','','','','',''], turn: 'X', winner: null });
+    }
   });
 
   /* ---- Rock Paper Scissors ---- */

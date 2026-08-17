@@ -75,7 +75,7 @@
   }
   #loginBtn:disabled{ opacity:.5; }
   #loginError{ color:var(--gold-soft); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:.9rem; min-height:1.4em; margin-top:6px; }
-  .foot{ margin-top:34px; font-size:.62rem; color:var(--gold); opacity:.5; max-width:260px; }
+  .foot{ margin-top:34px; font-size:.62rem; color:var(--gold); opacity:.72; max-width:260px; }
 
   /* ---------- TOASTS + OFFLINE BAR ---------- */
   #offlineBar{
@@ -211,6 +211,8 @@
   }
   #wpMiniSendBtn{ width:36px; height:36px; border-radius:50%; border:none; background:var(--maroon-bright); color:#fff; cursor:pointer; }
 
+  #tttModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
+  #tttModeRow .wpTab{ flex:1; }
   #tttStatus, #rpsStatus{
     text-align:center; padding:10px; font-size:.85rem; color:var(--gold-soft); flex:none;
   }
@@ -524,7 +526,7 @@
   }
   .bub img, .bub video{ max-width:100%; border-radius:8px; display:block; margin-top:4px; }
   .bub audio{ width:220px; max-width:100%; margin-top:4px; }
-  .time{ font-size:.55rem; color:var(--silver); opacity:.6; margin-top:3px; }
+  .time{ font-size:.55rem; color:var(--silver); opacity:.78; margin-top:3px; }
   .row.mine .time{ text-align:right; margin-right:4px; }
   .row.theirs .time{ margin-left:4px; }
   .callmsg{ text-align:center; font-size:.68rem; color:var(--gold); opacity:.75; margin:8px 0; font-family:'Cormorant Garamond',serif; font-style:italic; }
