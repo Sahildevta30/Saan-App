@@ -708,14 +708,22 @@
   let drawColor = '#d9b378';
   let drawing = false;
   let currentStroke = [];
+  let drawErasing = false;
 
   document.querySelectorAll('.drawColor').forEach(function(btn, idx){
     if(idx===0) btn.classList.add('active');
     btn.addEventListener('click', function(){
+      drawErasing = false;
+      document.getElementById('drawEraseBtn').classList.remove('active');
       document.querySelectorAll('.drawColor').forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
       drawColor = btn.getAttribute('data-color');
     });
+  });
+
+  document.getElementById('drawEraseBtn').addEventListener('click', function(){
+    drawErasing = !drawErasing;
+    this.classList.toggle('active', drawErasing);
   });
 
   function sizeCanvas(){
@@ -726,8 +734,9 @@
 
   function drawStrokeOnCanvas(stroke){
     if(!stroke.points || stroke.points.length < 2) return;
-    drawCtx.strokeStyle = stroke.color || '#d9b378';
-    drawCtx.lineWidth = 3;
+    drawCtx.globalCompositeOperation = stroke.erase ? 'destination-out' : 'source-over';
+    drawCtx.strokeStyle = stroke.erase ? 'rgba(0,0,0,1)' : (stroke.color || '#d9b378');
+    drawCtx.lineWidth = stroke.erase ? 18 : 3;
     drawCtx.lineCap = 'round';
     drawCtx.lineJoin = 'round';
     drawCtx.beginPath();
@@ -736,28 +745,46 @@
       if(i===0) drawCtx.moveTo(x,y); else drawCtx.lineTo(x,y);
     });
     drawCtx.stroke();
+    drawCtx.globalCompositeOperation = 'source-over';
   }
 
   let drawStrokesMap = {};
+  let drawStrokeOrder = [];
+  let drawRedoStack = [];
+
   function redrawAllStrokes(){
     drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-    Object.keys(drawStrokesMap).forEach(function(k){ drawStrokeOnCanvas(drawStrokesMap[k]); });
+    drawStrokeOrder.forEach(function(id){
+      if(drawStrokesMap[id]) drawStrokeOnCanvas(drawStrokesMap[id]);
+    });
+  }
+
+  function drawUpdateToolButtons(){
+    document.getElementById('drawUndoBtn').disabled = (drawStrokeOrder.length === 0);
+    document.getElementById('drawRedoBtn').disabled = (drawRedoStack.length === 0);
   }
 
   function openDrawing(){
     drawEl.classList.add('show');
     sizeCanvas();
     drawStrokesMap = {};
+    drawStrokeOrder = [];
+    drawRedoStack = [];
     drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
     const ref = db.ref('drawing/strokes');
     drawAddedRef = ref; drawRemovedRef = ref;
     ref.on('child_added', function(snap){
       drawStrokesMap[snap.key] = snap.val();
+      if(drawStrokeOrder.indexOf(snap.key) === -1) drawStrokeOrder.push(snap.key);
       drawStrokeOnCanvas(snap.val());
+      drawUpdateToolButtons();
     });
     ref.on('child_removed', function(snap){
       delete drawStrokesMap[snap.key];
+      const idx = drawStrokeOrder.indexOf(snap.key);
+      if(idx !== -1) drawStrokeOrder.splice(idx, 1);
       redrawAllStrokes();
+      drawUpdateToolButtons();
     });
   }
 
@@ -779,19 +806,22 @@
     const p = drawPos(e);
     const prev = currentStroke[currentStroke.length-1];
     currentStroke.push([p.x/drawCanvas.width, p.y/drawCanvas.height]);
-    drawCtx.strokeStyle = drawColor;
-    drawCtx.lineWidth = 3;
+    drawCtx.globalCompositeOperation = drawErasing ? 'destination-out' : 'source-over';
+    drawCtx.strokeStyle = drawErasing ? 'rgba(0,0,0,1)' : drawColor;
+    drawCtx.lineWidth = drawErasing ? 18 : 3;
     drawCtx.lineCap = 'round';
     drawCtx.beginPath();
     drawCtx.moveTo(prev[0]*drawCanvas.width, prev[1]*drawCanvas.height);
     drawCtx.lineTo(p.x, p.y);
     drawCtx.stroke();
+    drawCtx.globalCompositeOperation = 'source-over';
   }
   function endDraw(){
     if(!drawing) return;
     drawing = false;
     if(currentStroke.length > 1){
-      db.ref('drawing/strokes').push({ points: currentStroke, color: drawColor, addedBy: myName });
+      drawRedoStack = [];
+      db.ref('drawing/strokes').push({ points: currentStroke, color: drawColor, erase: drawErasing, addedBy: myName });
     }
     currentStroke = [];
   }
@@ -804,8 +834,24 @@
   drawCanvas.addEventListener('touchmove', function(e){ e.preventDefault(); moveDraw(e); });
   drawCanvas.addEventListener('touchend', function(e){ e.preventDefault(); endDraw(); });
 
+  document.getElementById('drawUndoBtn').addEventListener('click', function(){
+    if(drawStrokeOrder.length === 0) return;
+    const lastId = drawStrokeOrder[drawStrokeOrder.length - 1];
+    const strokeData = drawStrokesMap[lastId];
+    if(strokeData) drawRedoStack.push(strokeData);
+    db.ref('drawing/strokes/' + lastId).remove();
+  });
+  document.getElementById('drawRedoBtn').addEventListener('click', function(){
+    if(drawRedoStack.length === 0) return;
+    const strokeData = drawRedoStack.pop();
+    db.ref('drawing/strokes').push(strokeData);
+  });
+
   document.getElementById('drawClearBtn').addEventListener('click', function(){
-    if(confirm('Clear the whole drawing?')) db.ref('drawing/strokes').remove();
+    if(confirm('Clear the whole drawing?')){
+      db.ref('drawing/strokes').remove();
+      drawRedoStack = [];
+    }
   });
 
   document.getElementById('bingoCloseBtn').addEventListener('click', closeAllGameScreens);
@@ -1853,6 +1899,7 @@
 
   function ludoInitTokens(){
     return [
+      { pos: -1, homeSteps: 0 }, { pos: -1, homeSteps: 0 },
       { pos: -1, homeSteps: 0 }, { pos: -1, homeSteps: 0 }
     ];
   }
@@ -1987,15 +2034,18 @@
     ['Sahil','Ananya'].forEach(function(name){
       const tokens = state.tokens[name] || [];
       const color = LUDO_COLOR[name];
+      const BASE_OFFSETS = [[-0.7,-0.7],[0.7,-0.7],[-0.7,0.7],[0.7,0.7]];
+      const STACK_OFFSETS = [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]];
       tokens.forEach(function(tok, ti){
         let pt;
+        let stackOff = STACK_OFFSETS[ti % 4];
         if(tok.pos === -1){
           const base = LUDO_HOME_BASE_RC[name];
-          const ox = ti===0 ? -0.7 : 0.7, oy = ti===0 ? -0.7 : 0.7;
-          pt = ludoRcToXY(base[0]+oy, base[1]+ox);
+          const o = BASE_OFFSETS[ti % 4];
+          pt = ludoRcToXY(base[0]+o[1], base[1]+o[0]);
+          stackOff = [0,0];
         } else if(tok.homeSteps >= LUDO_HOME_STRETCH){
           pt = ludoRcToXY(7.5, 7.5);
-          pt.x += (ti===0? -cell*0.35 : cell*0.35);
         } else if(tok.homeSteps > 0){
           const rc = LUDO_HOME_COL_RC[name][tok.homeSteps-1];
           pt = ludoRcToXY(rc[0], rc[1]);
@@ -2004,11 +2054,10 @@
           const rc = LUDO_PATH_RC[trackIdx];
           pt = ludoRcToXY(rc[0], rc[1]);
         }
-        const off = ti===1 ? cell*0.18 : -cell*0.18;
         ludoCtx.beginPath();
         ludoCtx.fillStyle = color;
-        ludoCtx.strokeStyle = '#f6eeda'; ludoCtx.lineWidth = 2;
-        ludoCtx.arc(pt.x+off, pt.y, cell*0.28, 0, Math.PI*2);
+        ludoCtx.strokeStyle = '#f6eeda'; ludoCtx.lineWidth = 1.5;
+        ludoCtx.arc(pt.x + stackOff[0]*cell, pt.y + stackOff[1]*cell, cell*0.22, 0, Math.PI*2);
         ludoCtx.fill(); ludoCtx.stroke();
       });
     });
@@ -2021,6 +2070,35 @@
       ludoStatusEl.textContent = (state.turn===myName) ? 'Your turn — roll the dice' : (otherPersonName()+"'s turn");
       ludoRollBtn.disabled = (state.turn!==myName);
     }
+  }
+
+  function ludoBestMove(state, myTokens, movable, roll){
+    const opp = otherPersonName();
+    const oppTokens = state.tokens[opp] || [];
+    // Prefer bringing a new token out of base
+    for(const idx of movable){ if(myTokens[idx].pos === -1) return idx; }
+    // Prefer a move that captures an opponent token
+    for(const idx of movable){
+      const t = myTokens[idx];
+      if(t.homeSteps > 0) continue;
+      const newPos = t.pos + roll;
+      if(newPos >= 51) continue;
+      const trackIdx = (LUDO_START[myName] + newPos) % LUDO_TRACK_LEN;
+      if(LUDO_SAFE.indexOf(trackIdx) !== -1) continue;
+      const captures = oppTokens.some(function(ot){
+        if(ot.pos < 0 || ot.homeSteps > 0) return false;
+        return (LUDO_START[opp] + ot.pos) % LUDO_TRACK_LEN === trackIdx;
+      });
+      if(captures) return idx;
+    }
+    // Otherwise move the most-advanced token (closest to home)
+    let best = movable[0], bestProgress = -1;
+    movable.forEach(function(idx){
+      const t = myTokens[idx];
+      const progress = t.homeSteps > 0 ? (51 + t.homeSteps) : t.pos;
+      if(progress > bestProgress){ bestProgress = progress; best = idx; }
+    });
+    return best;
   }
 
   function ludoMovableTokens(tokens, roll){
@@ -2051,10 +2129,9 @@
         ludoApplyMove(state, movable[0], roll);
       } else {
         db.ref('games/ludo/lastRoll').set(roll);
-        ludoSelectedState = { state: state, roll: roll, options: movable };
-        ludoStatusEl.textContent = 'Tap a token to move it';
-        showToast('You have multiple movable tokens — moving token ' + (movable[0]+1) + '.');
-        ludoApplyMove(state, movable[0], roll);
+        const chosen = ludoBestMove(state, myTokens, movable, roll);
+        showToast('Moving your most useful token.');
+        ludoApplyMove(state, chosen, roll);
       }
     }).catch(function(){ ludoRollBtn.disabled = false; });
   });
@@ -2543,6 +2620,18 @@
     } else {
       const myGroup = ag[myName] ? (' — you: ' + ag[myName]) : '';
       poolStatusEl.textContent = (state.turn===myName) ? ('Your shot' + myGroup) : (otherPersonName() + "'s turn");
+    }
+    const balls = state.balls || poolPieces;
+    const solidsLeft = balls.filter(function(b){ return b.group==='solid' && b.active; }).length;
+    const stripesLeft = balls.filter(function(b){ return b.group==='stripe' && b.active; }).length;
+    const scoreEl = document.getElementById('poolScore');
+    if(!ag.Sahil && !ag.Ananya){
+      scoreEl.textContent = 'Solids left: ' + solidsLeft + '   —   Stripes left: ' + stripesLeft;
+    } else {
+      const sahilGroup = ag.Sahil, ananyaGroup = ag.Ananya;
+      const sahilLeft = sahilGroup==='solid' ? solidsLeft : stripesLeft;
+      const ananyaLeft = ananyaGroup==='solid' ? solidsLeft : stripesLeft;
+      scoreEl.textContent = 'Sahil (' + sahilGroup + '): ' + sahilLeft + ' left   —   Ananya (' + ananyaGroup + '): ' + ananyaLeft + ' left';
     }
   }
 

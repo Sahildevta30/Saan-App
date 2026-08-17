@@ -410,6 +410,7 @@
   /* ---------- CARROM / POOL (shared) ---------- */
   #carromStatus, #poolStatus{ text-align:center; padding:8px; font-size:.8rem; color:var(--gold-soft); flex:none; }
   #carromScore{ text-align:center; font-size:.72rem; color:var(--silver); flex:none; margin-bottom:4px; }
+  #poolScore{ text-align:center; font-size:.72rem; color:var(--silver); flex:none; margin-bottom:4px; }
   #carromCanvas, #poolCanvas{
     flex:1; margin:4px 14px 16px; border-radius:12px; touch-action:none; max-height:60vh;
   }
@@ -438,7 +439,14 @@
   }
 
   /* ---------- DRAWING BOARD ---------- */
-  #drawPalette{ flex:none; display:flex; gap:10px; align-items:center; justify-content:center; padding:12px; }
+  #drawPalette{ flex:none; display:flex; gap:10px; align-items:center; justify-content:center; padding:12px; flex-wrap:wrap; }
+  #drawToolRow{ flex:none; display:flex; gap:8px; align-items:center; justify-content:center; padding:0 12px 10px; }
+  #drawToolRow button{
+    padding:6px 12px; border-radius:16px; border:1px solid rgba(217,179,120,0.35);
+    background:none; color:var(--gold); font-family:'Jost',sans-serif; font-size:.72rem; cursor:pointer;
+  }
+  #drawToolRow button:disabled{ opacity:.3; cursor:default; }
+  #drawEraseBtn.active{ background:rgba(217,179,120,0.25); }
   .drawColor{ width:28px; height:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); cursor:pointer; }
   .drawColor.active{ border-color:#fff; }
   #drawClearBtn{

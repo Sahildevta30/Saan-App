@@ -323,6 +323,7 @@
       <button class="iconBtn" id="poolCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="poolStatus"></div>
+    <div id="poolScore"></div>
     <canvas id="poolCanvas"></canvas>
     <button id="poolResetBtn" class="ghResetBtn">New game</button>
   </div>
@@ -435,11 +436,20 @@
       <button class="iconBtn" id="drawCloseBtn" aria-label="Close">&#10005;</button>
     </div>
     <div id="drawPalette">
-      <button class="drawColor" data-color="#d9b378" style="background:#d9b378;"></button>
+      <button class="drawColor active" data-color="#d9b378" style="background:#d9b378;"></button>
       <button class="drawColor" data-color="#e9e4f0" style="background:#e9e4f0;"></button>
       <button class="drawColor" data-color="#a02832" style="background:#a02832;"></button>
       <button class="drawColor" data-color="#5f7a9e" style="background:#5f7a9e;"></button>
-      <button id="drawClearBtn">Clear</button>
+      <button class="drawColor" data-color="#2f9e55" style="background:#2f9e55;"></button>
+      <button class="drawColor" data-color="#e8a62b" style="background:#e8a62b;"></button>
+      <button class="drawColor" data-color="#c23a54" style="background:#c23a54;"></button>
+      <button class="drawColor" data-color="#111111" style="background:#111111;"></button>
+    </div>
+    <div id="drawToolRow">
+      <button id="drawEraseBtn" title="Eraser">&#129529;</button>
+      <button id="drawUndoBtn" title="Undo">&#8630;</button>
+      <button id="drawRedoBtn" title="Redo">&#8631;</button>
+      <button id="drawClearBtn">Clear all</button>
     </div>
     <canvas id="drawCanvas"></canvas>
   </div>
