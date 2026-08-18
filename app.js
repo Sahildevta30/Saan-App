@@ -153,6 +153,8 @@
     if(mgListenerRef){ mgListenerRef.off('value'); mgListenerRef = null; }
     if(raceListenerRef){ raceListenerRef.off('value'); raceListenerRef = null; }
     if(flamListenerRef){ flamListenerRef.off('value'); flamListenerRef = null; }
+    if(flamAnswersRef){ flamAnswersRef.off('value'); flamAnswersRef = null; flamCurrentQIdx = null; }
+    if(flamRecorder && flamRecording){ flamRecorder.stop(); }
     if(wpListenerRef){ wpListenerRef.off('value'); wpListenerRef = null; }
     if(wpReactionsRef){ wpReactionsRef.off('value'); wpReactionsRef = null; }
     if(wpPresenceRef){ wpPresenceRef.off('value'); wpPresenceRef = null; if(myName) db.ref('watchParty/presence/' + myName).set(false); }
@@ -1359,8 +1361,108 @@
       const state = snap.val();
       if(!state) return;
       renderFlamingo(state);
+      flamWatchAnswers(state.currentIndex);
     });
   }
+
+  let flamAnswersRef = null;
+  let flamCurrentQIdx = null;
+  function flamWatchAnswers(qIdx){
+    if(flamCurrentQIdx === qIdx && flamAnswersRef) return;
+    if(flamAnswersRef) flamAnswersRef.off('value');
+    flamCurrentQIdx = qIdx;
+    flamAnswersRef = db.ref('games/flamingo/answers/' + qIdx);
+    flamAnswersRef.on('value', function(snap){
+      renderFlamAnswers(snap.val());
+    });
+  }
+
+  function renderFlamAnswers(val){
+    const el = document.getElementById('flamAnswers');
+    el.innerHTML = '';
+    if(!val) return;
+    const entries = Object.keys(val).map(function(k){ return val[k]; });
+    entries.sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
+    entries.forEach(function(a){
+      const row = document.createElement('div');
+      row.className = 'flamAnswerRow';
+      let inner = '<b>' + a.by + '</b>';
+      if(a.type === 'text') inner += '<p>' + a.content.replace(/</g,'&lt;') + '</p>';
+      else if(a.type === 'voice') inner += '<audio controls src="' + a.content + '"></audio>';
+      else if(a.type === 'image') inner += '<img src="' + a.content + '" />';
+      else if(a.type === 'video') inner += '<video controls src="' + a.content + '"></video>';
+      row.innerHTML = inner;
+      el.appendChild(row);
+    });
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function flamSubmitAnswer(type, content){
+    if(flamCurrentQIdx === null) return;
+    db.ref('games/flamingo/answers/' + flamCurrentQIdx).push({ by: myName, type: type, content: content, ts: firebase.database.ServerValue.TIMESTAMP });
+    logActivityToday();
+  }
+
+  document.getElementById('flamSendTextBtn').addEventListener('click', function(){
+    const input = document.getElementById('flamTextInput');
+    const text = input.value.trim();
+    if(!text) return;
+    flamSubmitAnswer('text', text);
+    input.value = '';
+  });
+  document.getElementById('flamTextInput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') document.getElementById('flamSendTextBtn').click();
+  });
+
+  document.getElementById('flamCameraBtn').addEventListener('click', function(){
+    document.getElementById('flamCameraInput').click();
+  });
+  document.getElementById('flamVideoBtn').addEventListener('click', function(){
+    document.getElementById('flamVideoInput').click();
+  });
+  function flamHandleMediaFile(input, type){
+    const f = input.files[0];
+    if(!f) return;
+    if(f.size > 1.5*1024*1024){
+      showToast('Please keep photos/videos under 1.5MB so they send smoothly.', 'error');
+      input.value = ''; return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(){ flamSubmitAnswer(type, reader.result); input.value = ''; };
+    reader.readAsDataURL(f);
+  }
+  document.getElementById('flamCameraInput').addEventListener('change', function(){ flamHandleMediaFile(this, 'image'); });
+  document.getElementById('flamVideoInput').addEventListener('change', function(){ flamHandleMediaFile(this, 'video'); });
+
+  let flamRecorder = null, flamChunks = [], flamStream = null, flamRecording = false;
+  document.getElementById('flamVoiceBtn').addEventListener('click', async function(){
+    const btn = this;
+    if(flamRecording){
+      flamRecorder.stop();
+      return;
+    }
+    try{
+      flamStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      flamChunks = [];
+      flamRecorder = new MediaRecorder(flamStream);
+      flamRecorder.ondataavailable = function(e){ if(e.data.size>0) flamChunks.push(e.data); };
+      flamRecorder.onstop = function(){
+        flamRecording = false;
+        btn.classList.remove('recording');
+        flamStream.getTracks().forEach(function(t){ t.stop(); });
+        const blob = new Blob(flamChunks, { type:'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = function(){ flamSubmitAnswer('voice', reader.result); };
+        reader.readAsDataURL(blob);
+      };
+      flamRecorder.start();
+      flamRecording = true;
+      btn.classList.add('recording');
+      setTimeout(function(){ if(flamRecording) flamRecorder.stop(); }, 60000);
+    }catch(e){
+      showToast('Microphone access needed to record a voice answer.', 'error');
+    }
+  });
 
   function pickFlamingoQuestion(used){
     let pool = FLAMINGO_QUESTIONS.map(function(_,i){ return i; }).filter(function(i){ return used.indexOf(i) === -1; });
