@@ -44,7 +44,7 @@
   <div id="chat">
     <div class="hdr">
       <div>
-        <div class="brand">Saan</div>
+        <div class="brand" id="brandLink" style="cursor:pointer;">Saan</div>
         <div class="presence" id="otherPresence">&nbsp;</div>
       </div>
       <div class="hdr-right">
@@ -298,6 +298,10 @@
     <div class="ghHdr">
       <div class="brand" style="font-size:20px;">Snake &amp; Ladder</div>
       <button class="iconBtn" id="slCloseBtn" aria-label="Close">&#10005;</button>
+    </div>
+    <div id="slModeRow">
+      <button class="wpTab active" id="slModeTogether">Play together</button>
+      <button class="wpTab" id="slModeSolo">Play solo</button>
     </div>
     <div id="slStatus"></div>
     <div id="slBoardWrap"><div id="slBoard"></div><svg id="slOverlay"></svg></div>

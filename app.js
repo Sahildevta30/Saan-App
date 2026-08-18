@@ -214,6 +214,10 @@
     setTimeout(function(){ el.style.transform = 'scale(1)'; }, 150);
   });
 
+  document.getElementById('brandLink').addEventListener('click', function(){
+    window.open('https://ananya-080826-a83472.netlify.app/', '_blank');
+  });
+
   document.getElementById('gamesBtn').addEventListener('click', function(){
     gamesHubEl.classList.add('show');
     showCategoryHome();
@@ -1976,19 +1980,38 @@
     slEl.classList.add('show');
     slBuildBoard();
     setTimeout(slDrawOverlay, 30);
-    const ref = db.ref('games/snakeladder');
-    slListenerRef = ref;
-    ref.once('value').then(function(snap){
-      if(!snap.exists()){ ref.set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null }); }
-    });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      renderSnakeLadder(state);
-    });
+    slSetMode(false);
   }
 
-  function slPlaceToken(cls, num){
+  document.getElementById('slModeTogether').addEventListener('click', function(){ slSetMode(false); });
+  document.getElementById('slModeSolo').addEventListener('click', function(){ slSetMode(true); });
+
+  let slSoloMode = false;
+  let slSoloState = { positions: { you: 0, cpu: 0 }, turn: 'you', winner: null, lastRoll: null };
+
+  function slSetMode(solo){
+    slSoloMode = solo;
+    document.getElementById('slModeTogether').classList.toggle('active', !solo);
+    document.getElementById('slModeSolo').classList.toggle('active', solo);
+    if(slListenerRef){ slListenerRef.off('value'); slListenerRef = null; }
+    if(solo){
+      slSoloState = { positions: { you: 0, cpu: 0 }, turn: 'you', winner: null, lastRoll: null };
+      slRenderSolo();
+    } else {
+      const ref = db.ref('games/snakeladder');
+      slListenerRef = ref;
+      ref.once('value').then(function(snap){
+        if(!snap.exists()){ ref.set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null }); }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        renderSnakeLadder(state);
+      });
+    }
+  }
+
+  function slPlaceToken(cls, num, label){
     document.querySelectorAll('.' + cls).forEach(function(t){ t.remove(); });
     const cellId = num > 0 ? 'slc-' + num : 'slc-1';
     const cell = document.getElementById(cellId);
@@ -1996,13 +2019,48 @@
     const token = document.createElement('div');
     token.className = 'slToken ' + cls;
     if(num === 0) token.style.opacity = '0.4';
-    token.textContent = cls === 'p1' ? 'S' : 'A';
+    token.textContent = label;
     cell.appendChild(token);
   }
 
+  function slRollFor(pos, roll){
+    let newPos = pos + roll;
+    if(newPos > 100){ newPos = pos; }
+    else {
+      if(SL_SNAKES[newPos]) newPos = SL_SNAKES[newPos];
+      else if(SL_LADDERS[newPos]) newPos = SL_LADDERS[newPos];
+    }
+    return newPos;
+  }
+
+  function slRenderSolo(){
+    slPlaceToken('p1', slSoloState.positions.you, 'Y');
+    slPlaceToken('p2', slSoloState.positions.cpu, 'C');
+    slDiceEl.textContent = slSoloState.lastRoll ? DICE_FACES[slSoloState.lastRoll] : '?';
+    if(slSoloState.winner){
+      slStatusEl.textContent = (slSoloState.winner === 'you') ? 'You won! 🎉' : 'Computer won!';
+      slRollBtn.disabled = true;
+    } else {
+      slStatusEl.textContent = (slSoloState.turn === 'you') ? 'Your turn — roll the dice' : "Computer's turn";
+      slRollBtn.disabled = (slSoloState.turn !== 'you');
+    }
+  }
+
+  function slComputerTurn(){
+    setTimeout(function(){
+      const roll = 1 + Math.floor(Math.random()*6);
+      const newPos = slRollFor(slSoloState.positions.cpu, roll);
+      slSoloState.positions.cpu = newPos;
+      slSoloState.lastRoll = roll;
+      if(newPos === 100){ slSoloState.winner = 'cpu'; }
+      else { slSoloState.turn = 'you'; }
+      slRenderSolo();
+    }, 700);
+  }
+
   function renderSnakeLadder(state){
-    slPlaceToken('p1', state.positions.Sahil);
-    slPlaceToken('p2', state.positions.Ananya);
+    slPlaceToken('p1', state.positions.Sahil, 'S');
+    slPlaceToken('p2', state.positions.Ananya, 'A');
     slDiceEl.textContent = state.lastRoll ? DICE_FACES[state.lastRoll] : '?';
     if(state.winner){
       slStatusEl.textContent = (state.winner === myName) ? 'You won! 🎉' : (state.winner + ' won!');
@@ -2016,6 +2074,18 @@
   slRollBtn.addEventListener('click', function(){
     if(slRollBtn.disabled) return;
     slRollBtn.disabled = true;
+    if(slSoloMode){
+      if(slSoloState.winner || slSoloState.turn !== 'you'){ slRollBtn.disabled = false; return; }
+      const roll = 1 + Math.floor(Math.random()*6);
+      const newPos = slRollFor(slSoloState.positions.you, roll);
+      slSoloState.positions.you = newPos;
+      slSoloState.lastRoll = roll;
+      if(newPos === 100){ slSoloState.winner = 'you'; slRenderSolo(); return; }
+      slSoloState.turn = 'cpu';
+      slRenderSolo();
+      slComputerTurn();
+      return;
+    }
     db.ref('games/snakeladder').once('value').then(function(snap){
       const state = snap.val();
       if(!state || state.winner || state.turn !== myName) return;
@@ -2036,7 +2106,12 @@
     }).catch(function(){ slRollBtn.disabled = false; });
   });
   document.getElementById('slResetBtn').addEventListener('click', function(){
-    db.ref('games/snakeladder').set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null });
+    if(slSoloMode){
+      slSoloState = { positions: { you: 0, cpu: 0 }, turn: 'you', winner: null, lastRoll: null };
+      slRenderSolo();
+    } else {
+      db.ref('games/snakeladder').set({ positions: { Sahil: 0, Ananya: 0 }, turn: 'Sahil', winner: null, lastRoll: null });
+    }
   });
 
   /* ---------------- LUDO (simplified: shared 52-ring track + home stretch) ---------------- */

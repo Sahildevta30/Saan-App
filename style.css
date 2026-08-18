@@ -215,6 +215,8 @@
   #tttModeRow .wpTab{ flex:1; }
   #rpsModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
   #rpsModeRow .wpTab{ flex:1; }
+  #slModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
+  #slModeRow .wpTab{ flex:1; }
   #tttStatus, #rpsStatus{
     text-align:center; padding:10px; font-size:.85rem; color:var(--gold-soft); flex:none;
   }
@@ -591,6 +593,7 @@
   #pendingPreview .thumb{ width:34px; height:34px; border-radius:6px; object-fit:cover; background:rgba(255,255,255,0.08); }
   #pendingPreview .rm{ margin-left:auto; background:none; border:none; color:var(--gold); font-size:1rem; cursor:pointer; }
   #fileInput{ display:none; }
+  #cameraInput{ display:none; }
   #msgs::-webkit-scrollbar{ width:5px; }
   #msgs::-webkit-scrollbar-thumb{ background:rgba(217,179,120,0.35); border-radius:4px; }
 
