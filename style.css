@@ -155,18 +155,51 @@
   }
   .streakStrip .flame{ font-size:1.4rem; display:block; margin-bottom:3px; }
   .catCard{
-    display:flex; align-items:center; gap:16px; padding:18px 18px; border-radius:18px;
-    background:linear-gradient(155deg, rgba(217,179,120,0.14), rgba(13,18,38,0.9));
-    border:1px solid rgba(217,179,120,0.3); color:var(--moonlight); font-family:'Jost',sans-serif;
-    cursor:pointer; text-align:left;
+    display:flex; align-items:center; gap:16px; padding:20px 18px; border-radius:20px;
+    color:#fff; font-family:'Jost',sans-serif;
+    cursor:pointer; text-align:left; border:none; position:relative; overflow:hidden;
+    box-shadow:0 8px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
   }
-  .catIcon{ font-size:1.9rem; flex:none; }
-  .catText{ display:flex; flex-direction:column; gap:2px; flex:1; }
-  .catName{ font-size:1rem; font-family:'Cormorant Garamond',serif; color:var(--gold-soft); }
-  .catSub{ font-size:.68rem; color:var(--silver); }
-  .catArrow{ font-size:1.3rem; color:var(--gold); flex:none; opacity:.6; }
+  .catCard::after{
+    content:''; position:absolute; right:-20px; top:-20px; width:100px; height:100px; border-radius:50%;
+    background:rgba(255,255,255,0.12);
+  }
+  .catCard[data-cat="games"]{ background:linear-gradient(135deg, #6a3fd0, #2f6fe0); }
+  .catCard[data-cat="watch"]{ background:linear-gradient(135deg, #e0507a, #ff8a3d); }
+  .catCard[data-cat="music"]{ background:linear-gradient(135deg, #1fb6a8, #1a8fd6); }
+  .catCard[data-cat="planner"]{ background:linear-gradient(135deg, #f0a83c, #e0507a); }
+  .catCard[data-cat="creative"]{ background:linear-gradient(135deg, #2fae5f, #1fb6a8); }
+  .catIcon{ font-size:2.3rem; flex:none; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.3)); position:relative; z-index:1; }
+  .catText{ display:flex; flex-direction:column; gap:2px; flex:1; position:relative; z-index:1; }
+  .catName{ font-size:1.05rem; font-weight:600; font-family:'Jost',sans-serif; color:#fff; }
+  .catSub{ font-size:.68rem; color:rgba(255,255,255,0.85); }
+  .catArrow{ font-size:1.3rem; color:#fff; flex:none; opacity:.75; position:relative; z-index:1; }
   .catSection{ animation:catFadeIn .25s ease; }
   @keyframes catFadeIn{ from{ opacity:0; transform:translateX(8px);} to{ opacity:1; transform:translateX(0);} }
+
+  /* ---------- COLORFUL GAME TILES ---------- */
+  .ghCard{ position:relative; overflow:hidden; box-shadow:0 6px 16px rgba(0,0,0,0.3); }
+  .ghCard::after{
+    content:''; position:absolute; right:-16px; top:-16px; width:70px; height:70px; border-radius:50%;
+    background:rgba(255,255,255,0.1); pointer-events:none;
+  }
+  .ghIcon{ position:relative; z-index:1; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.35)); }
+  .ghName{ position:relative; z-index:1; font-weight:600; }
+  .ghCard[data-game="tictactoe"]{ background:linear-gradient(135deg,#ff6b6b,#c44569); border-color:transparent; }
+  .ghCard[data-game="rps"]{ background:linear-gradient(135deg,#feca57,#ff9f43); border-color:transparent; }
+  .ghCard[data-game="bingo"]{ background:linear-gradient(135deg,#48dbfb,#0abde3); border-color:transparent; }
+  .ghCard[data-game="wordchain"]{ background:linear-gradient(135deg,#1dd1a1,#10ac84); border-color:transparent; }
+  .ghCard[data-game="musicguess"]{ background:linear-gradient(135deg,#a29bfe,#6c5ce7); border-color:transparent; }
+  .ghCard[data-game="race"]{ background:linear-gradient(135deg,#ff9ff3,#f368e0); border-color:transparent; }
+  .ghCard[data-game="flamingo"]{ background:linear-gradient(135deg,#ff7eb3,#ff65a3); border-color:transparent; }
+  .ghCard[data-game="snakeladder"]{ background:linear-gradient(135deg,#00d2d3,#01a3a4); border-color:transparent; }
+  .ghCard[data-game="ludo"]{ background:linear-gradient(135deg,#ee5253,#c0392b); border-color:transparent; }
+  .ghCard[data-game="carrom"]{ background:linear-gradient(135deg,#576574,#222f3e); border-color:transparent; }
+  .ghCard[data-game="pool"]{ background:linear-gradient(135deg,#0f5132,#0a3d24); border-color:transparent; }
+  .ghCard[data-game="tictactoe"] .ghName, .ghCard[data-game="rps"] .ghName, .ghCard[data-game="bingo"] .ghName,
+  .ghCard[data-game="wordchain"] .ghName, .ghCard[data-game="musicguess"] .ghName, .ghCard[data-game="race"] .ghName,
+  .ghCard[data-game="flamingo"] .ghName, .ghCard[data-game="snakeladder"] .ghName, .ghCard[data-game="ludo"] .ghName,
+  .ghCard[data-game="carrom"] .ghName, .ghCard[data-game="pool"] .ghName{ color:#fff; }
 
   /* ---------- WATCH PARTY MINI CHAT ---------- */
   #wpChatToggle{
