@@ -62,8 +62,10 @@
       <button class="rm" id="pendingRemove">&times;</button>
     </div>
     <div id="composer">
-      <button class="attachBtn" id="attachBtn">&#128206;</button>
+      <button class="attachBtn" id="attachBtn" aria-label="Attach file">&#128206;</button>
       <input type="file" id="fileInput" accept="image/*,video/*,audio/*">
+      <button class="attachBtn" id="cameraBtn" aria-label="Camera">&#128247;</button>
+      <input type="file" id="cameraInput" accept="image/*,video/*" capture="environment">
       <textarea id="textInput" rows="1" placeholder="say something..."></textarea>
       <button id="sendBtn">&#10148;</button>
     </div>

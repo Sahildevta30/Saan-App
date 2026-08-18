@@ -3149,18 +3149,19 @@
   const pendingRemove = document.getElementById('pendingRemove');
 
   attachBtn.addEventListener('click', function(){ fileInput.click(); });
+  document.getElementById('cameraBtn').addEventListener('click', function(){ document.getElementById('cameraInput').click(); });
   pendingRemove.addEventListener('click', function(){
     pendingFile = null;
     pendingPreview.classList.remove('show');
     fileInput.value = '';
   });
 
-  fileInput.addEventListener('change', function(){
-    const f = fileInput.files[0];
+  function handleChatFileInput(inputEl){
+    const f = inputEl.files[0];
     if(!f) return;
     if(f.size > 1.5*1024*1024){
       showToast('Please keep photos/audio/video under 1.5MB so they send smoothly.', 'error');
-      fileInput.value=''; return;
+      inputEl.value=''; return;
     }
     const reader = new FileReader();
     reader.onload = function(){
@@ -3175,7 +3176,10 @@
       pendingPreview.classList.add('show');
     };
     reader.readAsDataURL(f);
-  });
+    inputEl.value = '';
+  }
+  fileInput.addEventListener('change', function(){ handleChatFileInput(fileInput); });
+  document.getElementById('cameraInput').addEventListener('change', function(){ handleChatFileInput(document.getElementById('cameraInput')); });
 
   textInput.addEventListener('input', function(){
     textInput.style.height='auto';
