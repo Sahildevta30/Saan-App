@@ -991,17 +991,85 @@
 
   function openWordChain(){
     wcEl.classList.add('show');
-    const ref = db.ref('games/wordchain');
-    wcListenerRef = ref;
-    ref.once('value').then(function(snap){
-      if(!snap.exists()){ ref.set({ words: [], turn: 'Sahil' }); }
-    });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      renderWordChain(state);
-    });
+    wcSetMode(false);
   }
+
+  document.getElementById('wcModeTogether').addEventListener('click', function(){ wcSetMode(false); });
+  document.getElementById('wcModeSolo').addEventListener('click', function(){ wcSetMode(true); });
+
+  let wcSoloMode = false;
+  let wcSoloState = { words: [], turn: 'you' };
+
+  const WC_DICTIONARY = ("apple elephant tiger rabbit tomato orange nest table earth horse egg giraffe zebra apricot tent take east" +
+    " tea ant tank kite egret tiger rope elbow window whale echo owl lion note evening giraffe elk king goat time energy" +
+    " yellow window winter red door river red night terrible earring garden nose engine egret tulip pear robin nut turtle" +
+    " eagle event tree elephant tail lion nail lamp panda apple end desk king grape emu unicorn nine engine echo owlet" +
+    " tornado orbit tiger reef fox xray yard drum monkey yeti index xylophone elephant taxi igloo octopus tug guitar" +
+    " icecream mango otter rat teapot pumpkin nature engine ear rain napkin key yak koala apron nurse elephant train nose" +
+    " enjoy yesterday rainbow window whistle earth hand dog goose earbud dawn nature earwig gap penguin nine engine echo" +
+    " wolf frog garlic camel lemon nose elk kettle earring garden noodle egg glass shark kangaroo owl leaf feather rat" +
+    " tortoise elbow window window").split(/\s+/).filter(function(w,i,a){ return w.length>=3 && a.indexOf(w)===i; });
+  const WC_BY_LETTER = {};
+  WC_DICTIONARY.forEach(function(w){
+    const c = w[0];
+    if(!WC_BY_LETTER[c]) WC_BY_LETTER[c] = [];
+    WC_BY_LETTER[c].push(w);
+  });
+
+  function wcSetMode(solo){
+    wcSoloMode = solo;
+    document.getElementById('wcModeTogether').classList.toggle('active', !solo);
+    document.getElementById('wcModeSolo').classList.toggle('active', solo);
+    if(wcListenerRef){ wcListenerRef.off('value'); wcListenerRef = null; }
+    if(solo){
+      wcSoloState = { words: [], turn: 'you' };
+      renderWordChainSolo();
+    } else {
+      const ref = db.ref('games/wordchain');
+      wcListenerRef = ref;
+      ref.once('value').then(function(snap){
+        if(!snap.exists()){ ref.set({ words: [], turn: 'Sahil' }); }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        renderWordChain(state);
+      });
+    }
+  }
+
+  function renderWordChainSolo(){
+    wcChainEl.innerHTML = '';
+    wcSoloState.words.forEach(function(w){
+      const span = document.createElement('div');
+      span.className = 'wcWord';
+      span.innerHTML = w.word + '<span class="wcBy">' + w.by + '</span>';
+      wcChainEl.appendChild(span);
+    });
+    wcStatusEl.textContent = (wcSoloState.turn === 'you') ? 'Your turn' : "Computer's turn";
+  }
+
+  function wcComputerMove(){
+    const words = wcSoloState.words;
+    const lastWord = words.length ? words[words.length-1].word : null;
+    const startLetter = lastWord ? lastWord[lastWord.length-1] : null;
+    let candidates = startLetter ? (WC_BY_LETTER[startLetter] || []) : WC_DICTIONARY;
+    const used = words.map(function(w){ return w.word; });
+    candidates = candidates.filter(function(w){ return used.indexOf(w) === -1; });
+    setTimeout(function(){
+      if(candidates.length === 0){
+        showToast('Computer is stuck — you win this round! 🎉');
+        wcSoloState.turn = 'you';
+        renderWordChainSolo();
+        return;
+      }
+      const pick = candidates[Math.floor(Math.random()*candidates.length)];
+      wcSoloState.words.push({ word: pick, by: 'Computer' });
+      wcSoloState.turn = 'you';
+      renderWordChainSolo();
+    }, 700);
+  }
+
   function renderWordChain(state){
     const words = state.words || [];
     wcChainEl.innerHTML = '';
@@ -1014,11 +1082,30 @@
     wcStatusEl.textContent = (state.turn === myName) ? 'Your turn' : (otherPersonName() + "'s turn");
   }
   function submitWord(){
+    const word = wcInput.value.trim().toLowerCase();
+    if(!word) return;
+    if(wcSoloMode){
+      if(wcSoloState.turn !== 'you'){ showToast("It's the computer's turn", 'error'); return; }
+      const words = wcSoloState.words;
+      const lastWord = words.length ? words[words.length-1].word : null;
+      if(lastWord && word[0] !== lastWord[lastWord.length-1]){
+        showToast('Word must start with "' + lastWord[lastWord.length-1].toUpperCase() + '"', 'error');
+        return;
+      }
+      if(words.some(function(w){ return w.word === word; })){
+        showToast('Word already used!', 'error');
+        return;
+      }
+      wcSoloState.words.push({ word: word, by: myName });
+      wcSoloState.turn = 'cpu';
+      wcInput.value = '';
+      renderWordChainSolo();
+      wcComputerMove();
+      return;
+    }
     db.ref('games/wordchain').once('value').then(function(snap){
       const state = snap.val() || { words: [], turn: 'Sahil' };
       if(state.turn !== myName){ showToast("It's " + otherPersonName() + "'s turn", 'error'); return; }
-      const word = wcInput.value.trim().toLowerCase();
-      if(!word) return;
       const words = state.words || [];
       const lastWord = words.length ? words[words.length-1].word : null;
       if(lastWord && word[0] !== lastWord[lastWord.length-1]){
