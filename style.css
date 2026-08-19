@@ -250,6 +250,8 @@
   #rpsModeRow .wpTab{ flex:1; }
   #slModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
   #slModeRow .wpTab{ flex:1; }
+  #raceModeRow{ display:flex; gap:8px; padding:10px 16px 0; flex:none; }
+  #raceModeRow .wpTab{ flex:1; }
   #tttStatus, #rpsStatus{
     text-align:center; padding:10px; font-size:.85rem; color:var(--gold-soft); flex:none;
   }

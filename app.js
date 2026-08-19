@@ -1146,34 +1146,55 @@
     raceCtx.setTransform(window.devicePixelRatio||1, 0, 0, window.devicePixelRatio||1, 0, 0);
   }
 
-  function openRace(){
-    raceEl.classList.add('show');
-    raceSizeCanvas();
+  let raceSoloMode = false;
+  let raceBotInterval = null;
+  function raceSetMode(solo){
+    raceSoloMode = solo;
+    document.getElementById('raceModeTogether').classList.toggle('active', !solo);
+    document.getElementById('raceModeSolo').classList.toggle('active', solo);
+    if(raceListenerRef){ raceListenerRef.off('value'); raceListenerRef = null; }
+    if(raceBotInterval){ clearInterval(raceBotInterval); raceBotInterval = null; }
     raceMyProgress = 0; raceMyVelocity = 0;
     raceOppProgress = 0; raceOppVelocity = 0; raceOppTarget = 0;
     raceFinished = null;
+    if(solo){
+      raceBotInterval = setInterval(function(){
+        if(raceFinished) return;
+        raceOppTarget = Math.min(raceOppTarget + 20 + Math.random()*20, RACE_TARGET);
+      }, 550);
+    } else {
+      const ref = db.ref('games/race');
+      raceListenerRef = ref;
+      ref.once('value').then(function(snap){
+        const state = snap.val();
+        if(!state || state.finished === undefined){
+          ref.set({ progress: { Sahil: 0, Ananya: 0 }, finished: null });
+        }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        const opp = otherPersonName();
+        raceOppTarget = (state.progress && state.progress[opp]) || 0;
+        if(state.finished && !raceFinished){
+          raceFinished = state.finished;
+        }
+        if(!state.finished){ raceFinished = null; }
+      });
+    }
+  }
+
+  function openRace(){
+    raceEl.classList.add('show');
+    raceSizeCanvas();
     raceLastTs = 0;
-    const ref = db.ref('games/race');
-    raceListenerRef = ref;
-    ref.once('value').then(function(snap){
-      const state = snap.val();
-      if(!state || state.finished === undefined){
-        ref.set({ progress: { Sahil: 0, Ananya: 0 }, finished: null });
-      }
-    });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      const opp = otherPersonName();
-      raceOppTarget = (state.progress && state.progress[opp]) || 0;
-      if(state.finished && !raceFinished){
-        raceFinished = state.finished;
-      }
-      if(!state.finished){ raceFinished = null; }
-    });
+    raceSetMode(false);
     if(raceRafId) cancelAnimationFrame(raceRafId);
     raceRafId = requestAnimationFrame(raceLoop);
   }
+
+  document.getElementById('raceModeTogether').addEventListener('click', function(){ raceSetMode(false); });
+  document.getElementById('raceModeSolo').addEventListener('click', function(){ raceSetMode(true); });
 
   function raceLoop(ts){
     if(!raceLastTs) raceLastTs = ts;
@@ -1191,10 +1212,15 @@
 
     if(!raceFinished && raceMyProgress >= RACE_TARGET){
       raceFinished = myName;
-      db.ref('games/race/finished').transaction(function(cur){ return cur ? cur : myName; });
+      if(!raceSoloMode){
+        db.ref('games/race/finished').transaction(function(cur){ return cur ? cur : myName; });
+      }
+    }
+    if(raceSoloMode && !raceFinished && raceOppProgress >= RACE_TARGET){
+      raceFinished = 'Computer';
     }
 
-    if(ts - raceLastSync > 120){
+    if(!raceSoloMode && ts - raceLastSync > 120){
       raceLastSync = ts;
       db.ref('games/race/progress/' + myName).set(Math.round(raceMyProgress));
     }
@@ -1264,7 +1290,7 @@
     raceCtx.font = '11px Jost, sans-serif';
     raceCtx.fillStyle = '#e8c896';
     raceCtx.fillText(myName, 10, laneH*0.5-16);
-    raceCtx.fillText(otherPersonName(), 10, laneH*1.5-16);
+    raceCtx.fillText(raceSoloMode ? 'Computer' : otherPersonName(), 10, laneH*1.5-16);
   }
 
   document.getElementById('raceTapBtn').addEventListener('click', function(){
@@ -1272,8 +1298,11 @@
     raceMyVelocity = Math.min(raceMyVelocity + RACE_IMPULSE, RACE_MAX_SPEED);
   });
   document.getElementById('raceResetBtn').addEventListener('click', function(){
-    raceMyProgress = 0; raceMyVelocity = 0; raceOppProgress = 0; raceOppVelocity = 0; raceFinished = null;
-    db.ref('games/race').set({ progress: { Sahil: 0, Ananya: 0 }, finished: null });
+    if(raceSoloMode){ raceSetMode(true); }
+    else {
+      raceMyProgress = 0; raceMyVelocity = 0; raceOppProgress = 0; raceOppVelocity = 0; raceFinished = null;
+      db.ref('games/race').set({ progress: { Sahil: 0, Ananya: 0 }, finished: null });
+    }
   });
   window.addEventListener('resize', function(){ if(raceEl.classList.contains('show')) raceSizeCanvas(); });
 
@@ -1281,6 +1310,7 @@
   closeAllGameScreens = function(){
     _origCloseAllGameScreensRace();
     if(raceRafId){ cancelAnimationFrame(raceRafId); raceRafId = null; }
+    if(raceBotInterval){ clearInterval(raceBotInterval); raceBotInterval = null; }
   };
 
 
