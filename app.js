@@ -2252,22 +2252,123 @@
     ];
   }
 
+  let ludoSoloMode = false;
+  let ludoSoloState = null;
+
+  function ludoSetMode(solo){
+    ludoSoloMode = solo;
+    document.getElementById('ludoModeTogether').classList.toggle('active', !solo);
+    document.getElementById('ludoModeSolo').classList.toggle('active', solo);
+    if(ludoListenerRef){ ludoListenerRef.off('value'); ludoListenerRef = null; }
+    if(solo){
+      ludoSoloState = { tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: myName, lastRoll: null, winner: null };
+      renderLudo(ludoSoloState);
+    } else {
+      const ref = db.ref('games/ludo');
+      ludoListenerRef = ref;
+      ref.once('value').then(function(snap){
+        if(!snap.exists()){
+          ref.set({ tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: 'Sahil', lastRoll: null, winner: null });
+        }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        renderLudo(state);
+      });
+    }
+  }
+
   function openLudo(){
     ludoEl.classList.add('show');
     ludoSizeCanvas();
-    const ref = db.ref('games/ludo');
-    ludoListenerRef = ref;
-    ref.once('value').then(function(snap){
-      if(!snap.exists()){
-        ref.set({ tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: 'Sahil', lastRoll: null, winner: null });
-      }
-    });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      renderLudo(state);
-    });
+    ludoSetMode(false);
   }
+
+  document.getElementById('ludoModeTogether').addEventListener('click', function(){ ludoSetMode(false); });
+  document.getElementById('ludoModeSolo').addEventListener('click', function(){ ludoSetMode(true); });
+
+  function ludoComputeMove(state, moverName, tokenIdx, roll){
+    const opponentName = (moverName === 'Sahil') ? 'Ananya' : 'Sahil';
+    const moverTokens = JSON.parse(JSON.stringify(state.tokens[moverName]));
+    const tok = moverTokens[tokenIdx];
+    if(tok.pos === -1){ tok.pos = 0; }
+    else if(tok.homeSteps > 0){ tok.homeSteps += roll; }
+    else {
+      tok.pos += roll;
+      if(tok.pos >= 51){ tok.homeSteps = tok.pos - 51; tok.pos = 51; }
+    }
+    let captured = false;
+    if(tok.pos >= 0 && tok.pos < 51 && tok.homeSteps === 0){
+      const moverTrackIdx = (LUDO_START[moverName] + tok.pos) % LUDO_TRACK_LEN;
+      if(LUDO_SAFE.indexOf(moverTrackIdx) === -1){
+        const oppTokens = JSON.parse(JSON.stringify(state.tokens[opponentName]));
+        oppTokens.forEach(function(ot){
+          if(ot.pos >= 0 && ot.homeSteps === 0){
+            const oppTrackIdx = (LUDO_START[opponentName] + ot.pos) % LUDO_TRACK_LEN;
+            if(oppTrackIdx === moverTrackIdx){ ot.pos = -1; captured = true; }
+          }
+        });
+        if(captured) state.tokens[opponentName] = oppTokens;
+      }
+    }
+    state.tokens[moverName] = moverTokens;
+    state.lastRoll = roll;
+    const allHome = moverTokens.every(function(t){ return t.homeSteps >= LUDO_HOME_STRETCH; });
+    if(allHome) state.winner = moverName;
+    state.turn = (roll===6 && !allHome) ? moverName : opponentName;
+    return state;
+  }
+
+  function ludoBestMoveGeneric(state, moverName, moverTokens, movable, roll){
+    const oppName = (moverName==='Sahil') ? 'Ananya' : 'Sahil';
+    const oppTokens = state.tokens[oppName] || [];
+    for(const idx of movable){ if(moverTokens[idx].pos === -1) return idx; }
+    for(const idx of movable){
+      const t = moverTokens[idx];
+      if(t.homeSteps > 0) continue;
+      const newPos = t.pos + roll;
+      if(newPos >= 51) continue;
+      const trackIdx = (LUDO_START[moverName] + newPos) % LUDO_TRACK_LEN;
+      if(LUDO_SAFE.indexOf(trackIdx) !== -1) continue;
+      const captures = oppTokens.some(function(ot){
+        if(ot.pos < 0 || ot.homeSteps > 0) return false;
+        return (LUDO_START[oppName] + ot.pos) % LUDO_TRACK_LEN === trackIdx;
+      });
+      if(captures) return idx;
+    }
+    let best = movable[0], bestProgress = -1;
+    movable.forEach(function(idx){
+      const t = moverTokens[idx];
+      const progress = t.homeSteps > 0 ? (51 + t.homeSteps) : t.pos;
+      if(progress > bestProgress){ bestProgress = progress; best = idx; }
+    });
+    return best;
+  }
+
+  function ludoComputerTurn(){
+    setTimeout(function(){
+      const state = ludoSoloState;
+      if(!state || state.winner) return;
+      const compName = otherPersonName();
+      const roll = 1 + Math.floor(Math.random()*6);
+      const compTokens = state.tokens[compName];
+      const movable = ludoMovableTokens(compTokens, roll);
+      if(movable.length === 0){
+        state.lastRoll = roll;
+        state.turn = myName;
+        renderLudo(state);
+        return;
+      }
+      const chosen = movable.length===1 ? movable[0] : ludoBestMoveGeneric(state, compName, compTokens, movable, roll);
+      ludoComputeMove(state, compName, chosen, roll);
+      renderLudo(state);
+      if(!state.winner && state.turn === compName){
+        ludoComputerTurn();
+      }
+    }, 700);
+  }
+
   function ludoSizeCanvas(){
     const rect = ludoCanvas.getBoundingClientRect();
     ludoCanvas.width = rect.width; ludoCanvas.height = rect.height;
@@ -2411,11 +2512,12 @@
     });
 
     ludoDiceEl.textContent = state.lastRoll ? DICE_FACES[state.lastRoll] : '?';
+    const oppLabel = ludoSoloMode ? 'Computer' : otherPersonName();
     if(state.winner){
-      ludoStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (state.winner + ' won!');
+      ludoStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (oppLabel + ' won!');
       ludoRollBtn.disabled = true;
     } else {
-      ludoStatusEl.textContent = (state.turn===myName) ? 'Your turn — roll the dice' : (otherPersonName()+"'s turn");
+      ludoStatusEl.textContent = (state.turn===myName) ? 'Your turn — roll the dice' : (oppLabel+"'s turn");
       ludoRollBtn.disabled = (state.turn!==myName);
     }
   }
@@ -2463,6 +2565,25 @@
   ludoRollBtn.addEventListener('click', function(){
     if(ludoRollBtn.disabled) return;
     ludoRollBtn.disabled = true;
+    if(ludoSoloMode){
+      const state = ludoSoloState;
+      if(!state || state.winner || state.turn !== myName){ ludoRollBtn.disabled = false; return; }
+      const roll = 1 + Math.floor(Math.random()*6);
+      const myTokens = state.tokens[myName];
+      const movable = ludoMovableTokens(myTokens, roll);
+      if(movable.length === 0){
+        state.lastRoll = roll;
+        state.turn = otherPersonName();
+        renderLudo(state);
+        ludoComputerTurn();
+        return;
+      }
+      const chosen = movable.length===1 ? movable[0] : ludoBestMoveGeneric(state, myName, myTokens, movable, roll);
+      ludoComputeMove(state, myName, chosen, roll);
+      renderLudo(state);
+      if(!state.winner && state.turn !== myName){ ludoComputerTurn(); }
+      return;
+    }
     db.ref('games/ludo').once('value').then(function(snap){
       const state = snap.val();
       if(!state || state.winner || state.turn !== myName) return;
@@ -2518,7 +2639,10 @@
   }
 
   document.getElementById('ludoResetBtn').addEventListener('click', function(){
-    db.ref('games/ludo').set({ tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: 'Sahil', lastRoll: null, winner: null });
+    if(ludoSoloMode){ ludoSetMode(true); }
+    else {
+      db.ref('games/ludo').set({ tokens: { Sahil: ludoInitTokens(), Ananya: ludoInitTokens() }, turn: 'Sahil', lastRoll: null, winner: null });
+    }
   });
 
   /* ---------------- SHARED 2D PHYSICS (Carrom + Pool) ---------------- */
