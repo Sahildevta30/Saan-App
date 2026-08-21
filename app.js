@@ -149,6 +149,7 @@
     if(drawRemovedRef){ drawRemovedRef.off('child_removed'); drawRemovedRef = null; }
     if(vnListenerRef){ vnListenerRef.off('value'); vnListenerRef = null; }
     if(songsListenerRef){ songsListenerRef.off('value'); songsListenerRef = null; }
+    if(songNowPlayingRef){ songNowPlayingRef.off('value'); songNowPlayingRef = null; }
     if(wcListenerRef){ wcListenerRef.off('value'); wcListenerRef = null; }
     if(mgListenerRef){ mgListenerRef.off('value'); mgListenerRef = null; }
     if(raceListenerRef){ raceListenerRef.off('value'); raceListenerRef = null; }
@@ -927,11 +928,46 @@
   const songsListEl = document.getElementById('songsListEl');
   const songTitleInput = document.getElementById('songTitleInput');
 
+  const MOOD_META = {
+    romantic: { emoji:'❤️', label:'Romantic', color:'#e0507a' },
+    party: { emoji:'🎉', label:'Party', color:'#f0a83c' },
+    chill: { emoji:'🌙', label:'Chill', color:'#1a8fd6' },
+    sad: { emoji:'😢', label:'Sad', color:'#6c5ce7' },
+    workout: { emoji:'💪', label:'Workout', color:'#1dd1a1' },
+    favorite: { emoji:'⭐', label:'Favorite', color:'#d9b378' }
+  };
+  let songMoodFilter = 'all';
+  let songNowPlayingRef = null;
+
   function openSongs(){
     songsEl.classList.add('show');
     const ref = db.ref('songs');
     songsListenerRef = ref;
     ref.on('value', renderSongs);
+    songNowPlayingRef = db.ref('songs_nowPlaying');
+    songNowPlayingRef.on('value', renderSongNowPlaying);
+  }
+
+  document.querySelectorAll('.moodChip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('.moodChip').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      songMoodFilter = chip.getAttribute('data-mood');
+      db.ref('songs').once('value').then(renderSongs);
+    });
+  });
+
+  let songNowPlayingVal = null;
+  function renderSongNowPlaying(snap){
+    songNowPlayingVal = snap.val();
+    const el = document.getElementById('songNowPlaying');
+    if(songNowPlayingVal && songNowPlayingVal.by && songNowPlayingVal.by !== myName && (Date.now() - (songNowPlayingVal.ts||0)) < 3*60*60*1000){
+      el.style.display = 'flex';
+      el.innerHTML = '<span class="pulseDot"></span>' + songNowPlayingVal.by + ' is listening to something 🎧';
+    } else {
+      el.style.display = 'none';
+    }
+    db.ref('songs').once('value').then(renderSongs);
   }
 
   function parseSpotifyLink(url){
@@ -944,18 +980,37 @@
     const val = snap.val();
     songsListEl.innerHTML = '';
     if(!val){ songsListEl.innerHTML = '<div id="vnEmpty">No songs yet — paste a Spotify link below 🎵</div>'; return; }
-    const entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
+    let entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
     entries.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+    if(songMoodFilter !== 'all'){
+      entries = entries.filter(function(e){ return (e.mood||'chill') === songMoodFilter; });
+    }
+    if(entries.length === 0){ songsListEl.innerHTML = '<div id="vnEmpty">No songs in this mood yet 🎵</div>'; return; }
     entries.forEach(function(item){
+      const mood = MOOD_META[item.mood] || MOOD_META.chill;
       const card = document.createElement('div');
-      card.className = 'songCard';
+      card.className = 'songCard' + (songNowPlayingVal && songNowPlayingVal.songId === item.id ? ' nowPlayingCard' : '');
       const hdr = document.createElement('div');
       hdr.className = 'songCardHdr';
-      hdr.innerHTML = '<span>' + (item.type==='playlist'?'📀 Playlist':'🎵 Track') + ' · added by ' + item.addedBy + '</span>';
+      const badge = document.createElement('span');
+      badge.className = 'moodBadge';
+      badge.style.background = mood.color + '33';
+      badge.style.color = mood.color;
+      badge.textContent = mood.emoji;
+      const meta = document.createElement('span');
+      meta.className = 'songMeta';
+      meta.textContent = (item.type==='playlist'?'Playlist':'Track') + ' · ' + item.addedBy;
+      const listenBtn = document.createElement('button');
+      listenBtn.className = 'songListenBtn';
+      listenBtn.textContent = '🎧 Listening';
+      listenBtn.addEventListener('click', function(){
+        db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+        showToast("Let " + otherPersonName() + " know you're listening 🎧");
+      });
       const del = document.createElement('button');
       del.className = 'songDel'; del.textContent = '🗑';
       del.addEventListener('click', function(){ if(confirm('Remove this song from the playlist?')) db.ref('songs/' + item.id).remove(); });
-      hdr.appendChild(del);
+      hdr.appendChild(badge); hdr.appendChild(meta); hdr.appendChild(listenBtn); hdr.appendChild(del);
       const iframe = document.createElement('iframe');
       iframe.src = 'https://open.spotify.com/embed/' + item.spotifyType + '/' + item.spotifyId + '?utm_source=generator&theme=0';
       iframe.height = (item.spotifyType === 'track') ? 152 : 352;
@@ -975,8 +1030,9 @@
       showToast("That doesn't look like a Spotify link. Open Spotify → Share → Copy link.", 'error');
       return;
     }
+    const mood = document.getElementById('songMoodInput').value;
     db.ref('songs').push({
-      spotifyType: parsed.type, spotifyId: parsed.id,
+      spotifyType: parsed.type, spotifyId: parsed.id, mood: mood,
       addedBy: myName, ts: firebase.database.ServerValue.TIMESTAMP
     });
     songTitleInput.value = '';

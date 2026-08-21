@@ -230,9 +230,26 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div id="songsHint">Paste a Spotify song or playlist link — it plays right here, on your own Spotify.</div>
+    <div id="songNowPlaying" style="display:none;"></div>
+    <div id="songMoodFilter">
+      <button class="moodChip active" data-mood="all">&#127925; All</button>
+      <button class="moodChip" data-mood="romantic">&#10084;&#65039; Romantic</button>
+      <button class="moodChip" data-mood="party">&#127881; Party</button>
+      <button class="moodChip" data-mood="chill">&#127769; Chill</button>
+      <button class="moodChip" data-mood="sad">&#128546; Sad</button>
+      <button class="moodChip" data-mood="workout">&#128170; Workout</button>
+      <button class="moodChip" data-mood="favorite">&#11088; Favorites</button>
+    </div>
     <div id="songsListEl"></div>
     <div id="blAddBar">
+      <select id="songMoodInput">
+        <option value="romantic">&#10084;&#65039;</option>
+        <option value="party">&#127881;</option>
+        <option value="chill" selected>&#127769;</option>
+        <option value="sad">&#128546;</option>
+        <option value="workout">&#128170;</option>
+        <option value="favorite">&#11088;</option>
+      </select>
       <input id="songTitleInput" type="text" placeholder="Paste Spotify link here..." />
       <button id="songAddBtn">&#10148;</button>
     </div>
