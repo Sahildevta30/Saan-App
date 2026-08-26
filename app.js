@@ -915,6 +915,37 @@
     }
   });
 
+  document.getElementById('drawSaveBtn').addEventListener('click', function(){
+    try{
+      // Export on a fresh off-screen canvas with a solid background painted in first —
+      // the on-screen canvas itself is transparent (the dark backdrop is just CSS behind it),
+      // so saving it directly would give a transparent/blank-looking PNG in most viewers.
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = drawCanvas.width;
+      exportCanvas.height = drawCanvas.height;
+      const exportCtx = exportCanvas.getContext('2d');
+      exportCtx.fillStyle = '#0a0d1c';
+      exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      exportCtx.drawImage(drawCanvas, 0, 0);
+
+      exportCanvas.toBlob(function(blob){
+        if(!blob){ showToast('Could not save the drawing — try again.', 'error'); return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+        a.href = url;
+        a.download = 'saan-drawing-' + stamp + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        showToast('Drawing saved 💾', 'success');
+      }, 'image/png');
+    }catch(e){
+      showToast('Could not save the drawing on this device.', 'error');
+    }
+  });
+
   document.getElementById('bingoCloseBtn').addEventListener('click', closeAllGameScreens);
   document.getElementById('blCloseBtn').addEventListener('click', closeAllGameScreens);
   document.getElementById('calCloseBtn').addEventListener('click', closeAllGameScreens);
@@ -2774,6 +2805,8 @@
   let carromAiming = false, carromAimStart = null, carromDragPt = null;
   let carromShotRunning = false;
   let carromLastSync = 0;
+  let carromSoloMode = false;
+  let carromSoloState = null;
 
   function carromSizeCanvas(){
     const rect = carromCanvas.getBoundingClientRect();
@@ -2808,37 +2841,59 @@
   function openCarrom(){
     carromEl.classList.add('show');
     carromSizeCanvas();
-    const ref = db.ref('games/carrom');
-    carromListenerRef = ref;
-    ref.once('value').then(function(snap){
-      if(!snap.exists()){
-        ref.set({
-          coins: carromInitPieces(), turn: 'Sahil', scores: { Sahil:0, Ananya:0 },
-          assignedColor: { Sahil:null, Ananya:null }, queenPending:false, winner:null, shotInProgress:false
-        });
-      }
-    });
-    ref.on('value', function(snap){
-      const state = snap.val();
-      if(!state) return;
-      if(!carromShotRunning){
-        carromPieces = (state.shotInProgress && state.liveCoins) ? state.liveCoins : state.coins;
-        carromDraw();
-      }
-      carromUpdateStatus(state);
-    });
+    carromSetMode(false);
+  }
+
+  document.getElementById('carromModeTogether').addEventListener('click', function(){ carromSetMode(false); });
+  document.getElementById('carromModeSolo').addEventListener('click', function(){ carromSetMode(true); });
+
+  function carromFreshState(turnName){
+    return {
+      coins: carromInitPieces(), turn: turnName, scores: { Sahil:0, Ananya:0 },
+      assignedColor: { Sahil:null, Ananya:null }, queenPending:false, winner:null, shotInProgress:false
+    };
+  }
+
+  function carromSetMode(solo){
+    carromSoloMode = solo;
+    document.getElementById('carromModeTogether').classList.toggle('active', !solo);
+    document.getElementById('carromModeSolo').classList.toggle('active', solo);
+    if(carromListenerRef){ carromListenerRef.off('value'); carromListenerRef = null; }
+    if(solo){
+      carromSoloState = carromFreshState(myName);
+      carromPieces = carromSoloState.coins;
+      carromDraw();
+      carromUpdateStatus(carromSoloState);
+    } else {
+      const ref = db.ref('games/carrom');
+      carromListenerRef = ref;
+      ref.once('value').then(function(snap){
+        if(!snap.exists()){ ref.set(carromFreshState('Sahil')); }
+      });
+      ref.on('value', function(snap){
+        const state = snap.val();
+        if(!state) return;
+        if(!carromShotRunning){
+          carromPieces = (state.shotInProgress && state.liveCoins) ? state.liveCoins : state.coins;
+          carromDraw();
+        }
+        carromUpdateStatus(state);
+      });
+    }
   }
 
   function carromUpdateStatus(state){
     const sc = state.scores || {Sahil:0,Ananya:0};
     const ac = state.assignedColor || {};
-    carromScoreEl.textContent = 'Sahil (' + (ac.Sahil||'?') + '): ' + sc.Sahil + '   —   Ananya (' + (ac.Ananya||'?') + '): ' + sc.Ananya;
+    const otherLabel = carromSoloMode ? 'Computer' : otherPersonName();
+    carromScoreEl.textContent = 'You (' + (ac[myName]||'?') + '): ' + (sc[myName]||0) +
+      '   —   ' + otherLabel + ' (' + (ac[otherPersonName()]||'?') + '): ' + (sc[otherPersonName()]||0);
     if(state.winner){
-      carromStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (state.winner + ' won!');
+      carromStatusEl.textContent = (state.winner===myName) ? 'You won! 🎉' : (otherLabel + ' won!');
     } else if(state.shotInProgress){
       carromStatusEl.textContent = 'Shot in progress...';
     } else {
-      carromStatusEl.textContent = (state.turn===myName) ? 'Your shot — drag the striker back and release' : (otherPersonName() + "'s turn");
+      carromStatusEl.textContent = (state.turn===myName) ? 'Your shot — drag the striker back and release' : (otherLabel + "'s turn");
     }
   }
 
@@ -2953,6 +3008,17 @@
   carromCanvas.addEventListener('touchend', function(e){ e.preventDefault(); carromReleaseAim(); });
 
   function carromStartAim(e){
+    if(carromSoloMode){
+      const state = carromSoloState;
+      if(!state || state.turn !== myName || state.winner || carromShotRunning) return;
+      const striker = carromPieces.find(function(p){ return p.isStriker; });
+      if(!striker) return;
+      const pos = carromPointerPos(e);
+      if(Math.hypot(pos.x-striker.x, pos.y-striker.y) < striker.r*4){
+        carromAiming = true;
+      }
+      return;
+    }
     db.ref('games/carrom').once('value').then(function(snap){
       const state = snap.val();
       if(!state || state.turn !== myName || state.winner || carromShotRunning) return;
@@ -2980,12 +3046,14 @@
     striker.vx = (dx/dist) * power;
     striker.vy = (dy/dist) * power;
     carromDragPt = null;
-    carromRunShot();
+    carromRunShot(myName);
   }
 
-  function carromRunShot(){
+  function carromRunShot(shooterName){
+    shooterName = shooterName || myName;
     carromShotRunning = true;
-    db.ref('games/carrom').update({ shotInProgress: true });
+    if(carromSoloMode){ carromSoloState.shotInProgress = true; carromUpdateStatus(carromSoloState); }
+    else { db.ref('games/carrom').update({ shotInProgress: true }); }
     let settleFrames = 0;
     function loop(ts){
       physStep(carromPieces, carromW, carromH, 0.985);
@@ -2993,12 +3061,12 @@
       const potted = physCheckPockets(carromPieces, pockets, Math.min(carromW,carromH)*0.045);
       carromDraw();
       if(!physAnyMoving(carromPieces)){ settleFrames++; } else { settleFrames = 0; }
-      if(ts - carromLastSync > 90){
+      if(!carromSoloMode && ts - carromLastSync > 90){
         carromLastSync = ts;
         db.ref('games/carrom/liveCoins').set(carromPieces.map(function(p){ return {id:p.id,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,vx:0,vy:0,r:p.r,color:p.color,active:p.active,isStriker:!!p.isStriker,colorName:p.colorName||null}; }));
       }
       if(settleFrames > 20){
-        carromFinishShot(potted);
+        carromFinishShot(potted, shooterName);
         return;
       }
       carromRafId = requestAnimationFrame(loop);
@@ -3006,66 +3074,131 @@
     carromRafId = requestAnimationFrame(loop);
   }
 
-  function carromFinishShot(pottedIdsAllFrames){
+  function carromFinishShotLogic(state, shooterName){
+    const otherOfShooter = (shooterName === 'Sahil') ? 'Ananya' : 'Sahil';
+    const scores = state.scores || {Sahil:0,Ananya:0};
+    const assignedColor = state.assignedColor || {Sahil:null,Ananya:null};
+    let queenPending = state.queenPending;
+    let winner = null;
+    let potThisTurn = false;
+
+    const striker = carromPieces.find(function(p){ return p.isStriker; });
+    if(striker && !striker.active){
+      striker.active = true; striker.x = carromW/2; striker.y = carromH - striker.r*3; striker.vx=0; striker.vy=0;
+    }
+
+    carromPieces.forEach(function(p){
+      if(p.active || p.isStriker || p.scored) return;
+      p.scored = true;
+      if(p.id === 'queen'){
+        queenPending = true;
+        scores[shooterName] += 3;
+        queenPending = false;
+        potThisTurn = true;
+      } else {
+        if(!assignedColor.Sahil && !assignedColor.Ananya){
+          assignedColor[shooterName] = p.colorName;
+          assignedColor[otherOfShooter] = (p.colorName === 'black') ? 'white' : 'black';
+        }
+        const owner = (assignedColor[shooterName] === p.colorName) ? shooterName : otherOfShooter;
+        scores[owner] += 1;
+        if(owner === shooterName) potThisTurn = true;
+      }
+    });
+
+    const shooterColor = assignedColor[shooterName];
+    if(shooterColor){
+      const remaining = carromPieces.filter(function(p){ return p.colorName === shooterColor && p.active; }).length;
+      if(remaining === 0) winner = shooterName;
+    }
+
+    const finalCoins = carromPieces.map(function(p){
+      return { id:p.id, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, scored:!!p.scored, isStriker:!!p.isStriker, colorName:p.colorName||null };
+    });
+
+    return {
+      coins: finalCoins, scores: scores, assignedColor: assignedColor,
+      queenPending: queenPending, shotInProgress:false, liveCoins:null,
+      turn: potThisTurn ? shooterName : otherOfShooter,
+      winner: winner
+    };
+  }
+
+  function carromFinishShot(pottedIdsAllFrames, shooterName){
+    shooterName = shooterName || myName;
+    if(carromSoloMode){
+      const result = carromFinishShotLogic(carromSoloState, shooterName);
+      carromSoloState.coins = result.coins;
+      carromSoloState.scores = result.scores;
+      carromSoloState.assignedColor = result.assignedColor;
+      carromSoloState.queenPending = result.queenPending;
+      carromSoloState.shotInProgress = false;
+      carromSoloState.turn = result.turn;
+      if(result.winner) carromSoloState.winner = result.winner;
+      carromPieces = carromSoloState.coins;
+      carromShotRunning = false;
+      carromDraw();
+      carromUpdateStatus(carromSoloState);
+      if(!carromSoloState.winner && carromSoloState.turn !== myName){
+        carromComputerTurn();
+      }
+      return;
+    }
     db.ref('games/carrom').once('value').then(function(snap){
       const state = snap.val();
-      const scores = state.scores || {Sahil:0,Ananya:0};
-      const assignedColor = state.assignedColor || {Sahil:null,Ananya:null};
-      let queenPending = state.queenPending;
-      let winner = null;
-      let potThisTurn = false;
-
-      const striker = carromPieces.find(function(p){ return p.isStriker; });
-      if(striker && !striker.active){
-        striker.active = true; striker.x = carromW/2; striker.y = carromH - striker.r*3; striker.vx=0; striker.vy=0;
-      }
-
-      carromPieces.forEach(function(p){
-        if(p.active || p.isStriker || p.scored) return;
-        p.scored = true;
-        if(p.id === 'queen'){
-          queenPending = true;
-          scores[myName] += 3;
-          queenPending = false;
-          potThisTurn = true;
-        } else {
-          if(!assignedColor.Sahil && !assignedColor.Ananya){
-            assignedColor[myName] = p.colorName;
-            assignedColor[otherPersonName()] = (p.colorName === 'black') ? 'white' : 'black';
-          }
-          const owner = (assignedColor[myName] === p.colorName) ? myName : otherPersonName();
-          scores[owner] += 1;
-          if(owner === myName) potThisTurn = true;
-        }
-      });
-
-      const myColor = assignedColor[myName];
-      if(myColor){
-        const remaining = carromPieces.filter(function(p){ return p.colorName === myColor && p.active; }).length;
-        if(remaining === 0) winner = myName;
-      }
-
-      const finalCoins = carromPieces.map(function(p){
-        return { id:p.id, x:p.x, y:p.y, vx:0, vy:0, r:p.r, color:p.color, active:p.active, scored:!!p.scored, isStriker:!!p.isStriker, colorName:p.colorName||null };
-      });
-
+      const result = carromFinishShotLogic(state, shooterName);
       const updates = {
-        coins: finalCoins, scores: scores, assignedColor: assignedColor,
-        queenPending: queenPending, shotInProgress:false, liveCoins:null,
-        turn: potThisTurn ? myName : otherPersonName()
+        coins: result.coins, scores: result.scores, assignedColor: result.assignedColor,
+        queenPending: result.queenPending, shotInProgress:false, liveCoins:null, turn: result.turn
       };
-      if(winner) updates.winner = winner;
+      if(result.winner) updates.winner = result.winner;
       db.ref('games/carrom').update(updates).then(function(){
         carromShotRunning = false;
       });
     });
   }
 
+  function carromComputerTurn(){
+    setTimeout(function(){
+      const state = carromSoloState;
+      if(!carromSoloMode || !state || state.winner) return;
+      const compName = otherPersonName();
+      if(state.turn !== compName) return;
+      const striker = carromPieces.find(function(p){ return p.isStriker; });
+      if(!striker || !striker.active){
+        // striker got pocketed on the previous shot and hasn't respawned yet — shouldn't
+        // normally happen since carromFinishShotLogic respawns it, but guard just in case.
+        state.turn = myName;
+        carromUpdateStatus(state);
+        return;
+      }
+      const compColor = (state.assignedColor || {})[compName];
+      const candidates = carromPieces.filter(function(p){ return p.active && !p.isStriker; });
+      let target = null;
+      if(compColor){ target = candidates.find(function(p){ return p.colorName === compColor; }); }
+      if(!target){ target = candidates.find(function(p){ return p.id !== 'queen'; }) || candidates[0]; }
+      if(!target){ state.turn = myName; carromUpdateStatus(state); return; }
+
+      const jitter = (Math.random()-0.5) * (target.r*1.6);
+      const dx = (target.x - striker.x) + jitter, dy = (target.y - striker.y) + jitter;
+      const dist = Math.hypot(dx,dy) || 1;
+      const power = 6 + Math.random()*6;
+      striker.vx = (dx/dist)*power;
+      striker.vy = (dy/dist)*power;
+      carromRunShot(compName);
+    }, 900);
+  }
+
   document.getElementById('carromResetBtn').addEventListener('click', function(){
-    db.ref('games/carrom').set({
-      coins: carromInitPieces(), turn: 'Sahil', scores: { Sahil:0, Ananya:0 },
-      assignedColor: { Sahil:null, Ananya:null }, queenPending:false, winner:null, shotInProgress:false
-    });
+    if(carromSoloMode){
+      carromSoloState = carromFreshState(myName);
+      carromPieces = carromSoloState.coins;
+      carromShotRunning = false;
+      carromDraw();
+      carromUpdateStatus(carromSoloState);
+    } else {
+      db.ref('games/carrom').set(carromFreshState('Sahil'));
+    }
   });
 
   /* ---------------- 8 BALL POOL ---------------- */
@@ -3083,12 +3216,24 @@
   const POOL_COLORS = ['#d94b2b','#2b64d9','#c23a54','#8a5a34','#e8a62b','#2f9e55','#7a1f33'];
 
   function poolSizeCanvas(){
+    // Reset any previously forced size so we can measure the real available box first.
+    poolCanvas.style.width = ''; poolCanvas.style.height = '';
     const rect = poolCanvas.getBoundingClientRect();
-    poolCanvas.width = rect.width; poolCanvas.height = rect.width/2;
+    const availW = rect.width;
+    const availH = rect.height || (window.innerHeight * 0.5);
+    // Pool table is a fixed 2:1 (landscape) ratio — fit it inside whatever box we've got,
+    // width-first, then fall back to height-first, so it always fills the screen fully
+    // in landscape orientation instead of shrinking to a tiny strip.
+    let w = availW, h = w / 2;
+    if(h > availH){ h = availH; w = h * 2; }
+    poolCanvas.width = Math.round(w);
+    poolCanvas.height = Math.round(h);
     poolW = poolCanvas.width; poolH = poolCanvas.height;
+    poolCanvas.style.width = poolW + 'px';
     poolCanvas.style.height = poolH + 'px';
   }
-  window.addEventListener('resize', function(){ if(poolEl.classList.contains('show')) poolSizeCanvas(); });
+  window.addEventListener('resize', function(){ if(poolEl.classList.contains('show')) { poolSizeCanvas(); poolDraw(); } });
+  window.addEventListener('orientationchange', function(){ if(poolEl.classList.contains('show')) setTimeout(function(){ poolSizeCanvas(); poolDraw(); }, 200); });
 
   function poolInitPieces(){
     const r = poolW * 0.018;
@@ -3149,7 +3294,7 @@
     } else if(state.shotInProgress){
       poolStatusEl.textContent = 'Shot in progress...';
     } else {
-      const myGroup = ag[myName] ? (' — you: ' + ag[myName]) : '';
+      const myGroup = ag[myName] ? (' — you have ' + (ag[myName]==='solid' ? 'Solids \u26aa(1-7)' : 'Stripes \u26ab(9-15)')) : '';
       poolStatusEl.textContent = (state.turn===myName) ? ('Your shot' + myGroup) : (otherPersonName() + "'s turn");
     }
     const balls = state.balls || poolPieces;
@@ -3157,12 +3302,21 @@
     const stripesLeft = balls.filter(function(b){ return b.group==='stripe' && b.active; }).length;
     const scoreEl = document.getElementById('poolScore');
     if(!ag.Sahil && !ag.Ananya){
-      scoreEl.textContent = 'Solids left: ' + solidsLeft + '   —   Stripes left: ' + stripesLeft;
+      scoreEl.innerHTML = '<span class="poolBallTag poolTagSolid">\u26aa Solids (1\u20137)</span>' +
+        ': ' + solidsLeft + ' left &nbsp;\u2014&nbsp; ' +
+        '<span class="poolBallTag poolTagStripe">\u26ab Stripes (9\u201315)</span>' +
+        ': ' + stripesLeft + ' left &nbsp;\u2014&nbsp; unassigned until first ball is potted';
     } else {
       const sahilGroup = ag.Sahil, ananyaGroup = ag.Ananya;
       const sahilLeft = sahilGroup==='solid' ? solidsLeft : stripesLeft;
       const ananyaLeft = ananyaGroup==='solid' ? solidsLeft : stripesLeft;
-      scoreEl.textContent = 'Sahil (' + sahilGroup + '): ' + sahilLeft + ' left   —   Ananya (' + ananyaGroup + '): ' + ananyaLeft + ' left';
+      const tagHtml = function(name, group, left){
+        const cls = group==='solid' ? 'poolTagSolid' : 'poolTagStripe';
+        const icon = group==='solid' ? '\u26aa' : '\u26ab';
+        const label = group==='solid' ? 'Solids (1\u20137)' : 'Stripes (9\u201315)';
+        return '<span class="poolBallTag ' + cls + '">' + icon + ' ' + name + ' \u2014 ' + label + '</span>: ' + left + ' left';
+      };
+      scoreEl.innerHTML = tagHtml('Sahil', sahilGroup, sahilLeft) + ' &nbsp;\u2014&nbsp; ' + tagHtml('Ananya', ananyaGroup, ananyaLeft);
     }
   }
 
@@ -3644,6 +3798,8 @@
   function setupTyping(name){
     const other = name === 'Sahil' ? 'Ananya' : 'Sahil';
     const myTypingRef = db.ref('typing/' + name);
+    myTypingRef.set(false);
+    myTypingRef.onDisconnect().set(false); // never leave a stale "typing" flag if the tab/app closes mid-type
     db.ref('typing/' + other).on('value', function(snap){
       const banner = document.getElementById('typingBanner');
       if(snap.val()){
@@ -3813,6 +3969,45 @@
   let iAmCaller = false;
   let processedCandidateKeys = {};
   let speakerOn = true;
+  let callTimeoutTimer = null;
+  const CALL_NO_ANSWER_MS = 30000;
+
+  /* ---- Ringtone (Web Audio beep loop) + vibration, since no audio asset ships with the app ---- */
+  let ringtoneCtx = null;
+  let ringtoneBeepInterval = null;
+  let ringtoneVibrateInterval = null;
+  function playRingtone(){
+    stopRingtone();
+    try{
+      ringtoneCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const beep = function(){
+        if(!ringtoneCtx) return;
+        const osc = ringtoneCtx.createOscillator();
+        const gain = ringtoneCtx.createGain();
+        osc.type = 'sine'; osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, ringtoneCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.18, ringtoneCtx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ringtoneCtx.currentTime + 0.5);
+        osc.connect(gain); gain.connect(ringtoneCtx.destination);
+        osc.start();
+        osc.stop(ringtoneCtx.currentTime + 0.55);
+      };
+      beep();
+      ringtoneBeepInterval = setInterval(beep, 1500);
+    }catch(e){ /* AudioContext unavailable — ignore, visual UI still shows the ring */ }
+    if('vibrate' in navigator){
+      try{
+        navigator.vibrate([500,300]);
+        ringtoneVibrateInterval = setInterval(function(){ navigator.vibrate([500,300]); }, 1500);
+      }catch(e){}
+    }
+  }
+  function stopRingtone(){
+    if(ringtoneBeepInterval){ clearInterval(ringtoneBeepInterval); ringtoneBeepInterval = null; }
+    if(ringtoneVibrateInterval){ clearInterval(ringtoneVibrateInterval); ringtoneVibrateInterval = null; }
+    if('vibrate' in navigator){ try{ navigator.vibrate(0); }catch(e){} }
+    if(ringtoneCtx){ try{ ringtoneCtx.close(); }catch(e){} ringtoneCtx = null; }
+  }
 
   const incomingCallEl = document.getElementById('incomingCall');
   const inCallEl = document.getElementById('inCall');
@@ -3847,6 +4042,7 @@
       if(call.status === 'ringing' && call.callee === myName && !pc){
         showIncoming(call);
       } else if(call.status === 'accepted' && call.caller === myName && pc && !pc.currentRemoteDescription){
+        if(callTimeoutTimer){ clearTimeout(callTimeoutTimer); callTimeoutTimer = null; }
         handleAnswer(call);
       } else if(call.status === 'ended' || call.status === 'declined'){
         cleanupCallUI(call.status);
@@ -3877,6 +4073,7 @@
     document.getElementById('ringKind').textContent = (call.type==='video' ? 'video call' : 'voice call');
     incomingCallEl.classList.add('show');
     window._pendingCall = call;
+    playRingtone();
   }
 
   async function getMedia(type){
@@ -3942,11 +4139,21 @@
     await callRef.set({ caller: myName, callee: other, type: type, status:'ringing', offer:{ type:offer.type, sdp:offer.sdp } });
 
     showInCallUI(other, 'calling\u2026', type);
+
+    if(callTimeoutTimer){ clearTimeout(callTimeoutTimer); }
+    callTimeoutTimer = setTimeout(function(){
+      callTimeoutTimer = null;
+      if(pc && !pc.currentRemoteDescription && iAmCaller){
+        callStatus.textContent = 'no answer';
+        setTimeout(function(){ endCall('ended'); }, 1400);
+      }
+    }, CALL_NO_ANSWER_MS);
   }
 
   async function acceptIncomingCall(){
     const call = window._pendingCall;
     if(!call) return;
+    stopRingtone();
     processedCandidateKeys = {};
     incomingCallEl.classList.remove('show');
     try{
