@@ -1034,7 +1034,7 @@
       badge.textContent = mood.emoji;
       const meta = document.createElement('span');
       meta.className = 'songMeta';
-      meta.textContent = (item.type==='playlist'?'Playlist':'Track') + ' · ' + item.addedBy;
+      meta.textContent = (item.spotifyType==='playlist'?'Playlist':item.spotifyType==='album'?'Album':item.spotifyType==='episode'?'Episode':item.spotifyType==='show'?'Show':'Track') + ' · ' + item.addedBy;
       const listenBtn = document.createElement('button');
       listenBtn.className = 'songListenBtn';
       listenBtn.textContent = '🎧 Listening';
