@@ -967,7 +967,10 @@
     } else {
       el.style.display = 'none';
     }
-    db.ref('songs').once('value').then(renderSongs);
+    document.querySelectorAll('.songCard').forEach(function(card){
+      const isNow = songNowPlayingVal && card.getAttribute('data-song-id') === songNowPlayingVal.songId;
+      card.classList.toggle('nowPlayingCard', !!isNow);
+    });
   }
 
   function parseSpotifyLink(url){
@@ -989,6 +992,7 @@
     entries.forEach(function(item){
       const mood = MOOD_META[item.mood] || MOOD_META.chill;
       const card = document.createElement('div');
+      card.setAttribute('data-song-id', item.id);
       card.className = 'songCard' + (songNowPlayingVal && songNowPlayingVal.songId === item.id ? ' nowPlayingCard' : '');
       const hdr = document.createElement('div');
       hdr.className = 'songCardHdr';
@@ -1015,8 +1019,7 @@
       iframe.src = 'https://open.spotify.com/embed/' + item.spotifyType + '/' + item.spotifyId + '?utm_source=generator&theme=0';
       iframe.height = (item.spotifyType === 'track') ? 152 : 352;
       iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-      iframe.loading = 'lazy';
-      card.appendChild(hdr);
+            card.appendChild(hdr);
       card.appendChild(iframe);
       songsListEl.appendChild(card);
     });
@@ -4071,6 +4074,8 @@
   }
 
   function cleanupCallUI(){
+    stopRingtone();
+    if(callTimeoutTimer){ clearTimeout(callTimeoutTimer); callTimeoutTimer = null; }
     incomingCallEl.classList.remove('show');
     inCallEl.classList.remove('show');
     inCallEl.classList.remove('minimized');
