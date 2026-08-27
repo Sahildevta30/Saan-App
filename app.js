@@ -4362,6 +4362,12 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=7').catch(function(){});
+  });
+  let swReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(swReloaded) return;
+    swReloaded = true;
+    location.reload();
   });
 }
