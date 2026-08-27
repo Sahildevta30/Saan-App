@@ -1,4 +1,4 @@
-const CACHE_NAME = 'saan-cache-v4';
+const CACHE_NAME = 'saan-cache-v5';
 const APP_SHELL = ['/Saan-App/', '/Saan-App/index.html', '/Saan-App/manifest.json', '/Saan-App/icon-192.png', '/Saan-App/icon-512.png'];
 
 /* ---------------- FIREBASE CLOUD MESSAGING (background push) ---------------- */
