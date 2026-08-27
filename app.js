@@ -1074,10 +1074,29 @@
       embedHost.className = 'spotifyEmbedHost';
       const embedHeight = (item.spotifyType === 'track') ? 160 : 400;
       embedHost.style.height = embedHeight + 'px';
+      const loadHint = document.createElement('div');
+      loadHint.className = 'songLoadHint';
+      loadHint.textContent = 'Loading player…';
+      const fallbackLink = document.createElement('a');
+      fallbackLink.className = 'songFallbackLink';
+      fallbackLink.href = 'https://open.spotify.com/' + item.spotifyType + '/' + item.spotifyId;
+      fallbackLink.target = '_blank';
+      fallbackLink.rel = 'noopener';
+      fallbackLink.textContent = '\u2197 Open in Spotify app instead';
       card.appendChild(hdr);
       card.appendChild(playBtn);
       card.appendChild(embedHost);
+      card.appendChild(loadHint);
+      card.appendChild(fallbackLink);
       songsListEl.appendChild(card);
+
+      // If the embed hasn't finished mounting after a few seconds (slow connection,
+      // Spotify's own JS bundle taking a while), tell the person instead of leaving
+      // them staring at a stuck loading-color block with no way forward.
+      const loadTimeout = setTimeout(function(){
+        loadHint.textContent = 'Taking a while to load — try "Open in Spotify" below, or check your connection.';
+        loadHint.classList.add('slow');
+      }, 7000);
 
       let controllerRef = null;
       let pendingPlay = false;
@@ -1101,6 +1120,8 @@
         IFrameAPI.createController(embedHost, options, function(controller){
           controllerRef = controller;
           spotifyControllers[item.id] = controller;
+          clearTimeout(loadTimeout);
+          loadHint.style.display = 'none';
           controller.addListener('playback_update', function(e){
             const isPlaying = !!(e && e.data && e.data.isPaused === false);
             playBtn.innerHTML = isPlaying ? '⏸ Playing…' : '🎧 Play in Saan';

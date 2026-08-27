@@ -399,6 +399,15 @@
   .songOpenLink:active{ background:#19b653; }
   .spotifyEmbedHost{ overflow:hidden; }
   .spotifyEmbedHost iframe{ width:100%; height:100%; border:none; display:block; }
+  .songLoadHint{
+    text-align:center; font-size:.62rem; color:var(--silver); opacity:.6; padding:6px 10px 0;
+    font-family:'Jost',sans-serif;
+  }
+  .songLoadHint.slow{ color:#f0a860; opacity:.9; }
+  .songFallbackLink{
+    display:block; text-align:center; font-size:.65rem; color:var(--gold-soft); opacity:.75;
+    font-family:'Jost',sans-serif; text-decoration:underline; padding:6px 10px 10px;
+  }
   #songMoodInput{
     flex:none; background:rgba(20,27,56,0.7); border:1px solid rgba(217,179,120,0.3); border-radius:10px;
     color:var(--moonlight); font-size:.9rem; padding:6px 4px;
