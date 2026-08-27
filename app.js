@@ -1050,8 +1050,15 @@
       iframe.src = 'https://open.spotify.com/embed/' + item.spotifyType + '/' + item.spotifyId + '?utm_source=generator&theme=0';
       iframe.height = (item.spotifyType === 'track') ? 152 : 352;
       iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-            card.appendChild(hdr);
+      const openLink = document.createElement('a');
+      openLink.className = 'songOpenLink';
+      openLink.href = 'https://open.spotify.com/' + item.spotifyType + '/' + item.spotifyId;
+      openLink.target = '_blank';
+      openLink.rel = 'noopener';
+      openLink.innerHTML = '▶ Play on Spotify';
+      card.appendChild(hdr);
       card.appendChild(iframe);
+      card.appendChild(openLink);
       songsListEl.appendChild(card);
     });
   }
