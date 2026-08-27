@@ -1,4 +1,4 @@
-const CACHE_NAME = 'saan-cache-v2';
+const CACHE_NAME = 'saan-cache-v3';
 const APP_SHELL = ['/Saan-App/', '/Saan-App/index.html', '/Saan-App/manifest.json', '/Saan-App/icon-192.png', '/Saan-App/icon-512.png'];
 
 /* ---------------- FIREBASE CLOUD MESSAGING (background push) ---------------- */
@@ -62,7 +62,7 @@ self.addEventListener('fetch', function(event){
     return; // let these pass through untouched
   }
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-store' })
       .then(function(res){
         const resClone = res.clone();
         caches.open(CACHE_NAME).then(function(cache){ cache.put(event.request, resClone); });
