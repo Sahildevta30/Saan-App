@@ -392,12 +392,11 @@
   .songCard iframe{ width:100%; border:none; display:block; }
   .songOpenLink{
     display:flex; align-items:center; justify-content:center; gap:6px;
-    width:100%; padding:8px; font-size:.68rem; font-family:'Jost',sans-serif; font-weight:600;
-    color:#1ed760; background:rgba(30,215,96,0.08); text-decoration:none;
-    border:none; border-top:1px solid rgba(217,179,120,0.15); cursor:pointer;
+    width:calc(100% - 20px); margin:0 10px 8px; padding:10px; font-size:.72rem; font-family:'Jost',sans-serif; font-weight:700;
+    color:#0d1224; background:#1ed760; border-radius:10px; text-decoration:none;
+    border:none; cursor:pointer;
   }
-  .songOpenLink:active{ background:rgba(30,215,96,0.18); }
-  .songOpenLink:disabled{ opacity:.5; cursor:default; }
+  .songOpenLink:active{ background:#19b653; }
   .spotifyEmbedHost iframe{ width:100%; border:none; display:block; }
   #songMoodInput{
     flex:none; background:rgba(20,27,56,0.7); border:1px solid rgba(217,179,120,0.3); border-radius:10px;

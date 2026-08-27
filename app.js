@@ -1066,17 +1066,28 @@
       del.className = 'songDel'; del.textContent = '🗑';
       del.addEventListener('click', function(){ if(confirm('Remove this song from the playlist?')) db.ref('songs/' + item.id).remove(); });
       hdr.appendChild(badge); hdr.appendChild(meta); hdr.appendChild(del);
-      const embedHost = document.createElement('div');
-      embedHost.className = 'spotifyEmbedHost';
       const playBtn = document.createElement('button');
       playBtn.type = 'button';
       playBtn.className = 'songOpenLink';
-      playBtn.innerHTML = '▶ Loading player…';
-      playBtn.disabled = true;
+      playBtn.innerHTML = '🎧 Play in Saan';
+      const embedHost = document.createElement('div');
+      embedHost.className = 'spotifyEmbedHost';
       card.appendChild(hdr);
-      card.appendChild(embedHost);
       card.appendChild(playBtn);
+      card.appendChild(embedHost);
       songsListEl.appendChild(card);
+
+      let controllerRef = null;
+      let pendingPlay = false;
+      playBtn.addEventListener('click', function(){
+        db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+        if(controllerRef){
+          controllerRef.togglePlay();
+        } else {
+          pendingPlay = true;
+          playBtn.innerHTML = '⏳ Loading, tap again in a sec…';
+        }
+      });
 
       withSpotifyAPI(function(IFrameAPI){
         if(!embedHost.isConnected) return; // card was removed by a re-render before the API finished loading
@@ -1086,17 +1097,13 @@
           height: (item.spotifyType === 'track') ? 152 : 352
         };
         IFrameAPI.createController(embedHost, options, function(controller){
+          controllerRef = controller;
           spotifyControllers[item.id] = controller;
-          playBtn.disabled = false;
-          playBtn.innerHTML = '▶ Play in Saan';
           controller.addListener('playback_update', function(e){
             const isPlaying = !!(e && e.data && e.data.isPaused === false);
-            playBtn.innerHTML = isPlaying ? '⏸ Playing…' : '▶ Play in Saan';
+            playBtn.innerHTML = isPlaying ? '⏸ Playing…' : '🎧 Play in Saan';
           });
-          playBtn.addEventListener('click', function(){
-            controller.togglePlay();
-            db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
-          });
+          if(pendingPlay){ pendingPlay = false; controller.togglePlay(); }
         });
       });
     });
