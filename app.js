@@ -1072,6 +1072,8 @@
       playBtn.innerHTML = '🎧 Play in Saan';
       const embedHost = document.createElement('div');
       embedHost.className = 'spotifyEmbedHost';
+      const embedHeight = (item.spotifyType === 'track') ? 160 : 400;
+      embedHost.style.height = embedHeight + 'px';
       card.appendChild(hdr);
       card.appendChild(playBtn);
       card.appendChild(embedHost);
@@ -1094,7 +1096,7 @@
         const options = {
           uri: 'spotify:' + item.spotifyType + ':' + item.spotifyId,
           width: '100%',
-          height: (item.spotifyType === 'track') ? 152 : 352
+          height: embedHeight
         };
         IFrameAPI.createController(embedHost, options, function(controller){
           controllerRef = controller;
@@ -4362,7 +4364,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=7').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=8').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
