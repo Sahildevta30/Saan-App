@@ -359,6 +359,10 @@
     display:flex; align-items:center; gap:8px; animation:catFadeIn .3s ease;
   }
   #songNowPlaying .pulseDot{ width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px #4ade80; animation:pipPulse 1.4s infinite; flex:none; }
+  #songNowPlaying #joinListenBtn{
+    margin-left:auto; flex:none; background:#4ade80; color:#0d1224; border:none; border-radius:10px;
+    padding:5px 10px; font-size:.66rem; font-weight:700; font-family:'Jost',sans-serif; cursor:pointer;
+  }
   #songMoodFilter{ display:flex; gap:6px; padding:10px 16px 0; overflow-x:auto; flex:none; }
   .moodChip{
     flex:none; padding:6px 12px; border-radius:16px; border:1px solid rgba(217,179,120,0.3);
@@ -388,11 +392,13 @@
   .songCard iframe{ width:100%; border:none; display:block; }
   .songOpenLink{
     display:flex; align-items:center; justify-content:center; gap:6px;
-    padding:8px; font-size:.68rem; font-family:'Jost',sans-serif; font-weight:600;
+    width:100%; padding:8px; font-size:.68rem; font-family:'Jost',sans-serif; font-weight:600;
     color:#1ed760; background:rgba(30,215,96,0.08); text-decoration:none;
-    border-top:1px solid rgba(217,179,120,0.15);
+    border:none; border-top:1px solid rgba(217,179,120,0.15); cursor:pointer;
   }
   .songOpenLink:active{ background:rgba(30,215,96,0.18); }
+  .songOpenLink:disabled{ opacity:.5; cursor:default; }
+  .spotifyEmbedHost iframe{ width:100%; border:none; display:block; }
   #songMoodInput{
     flex:none; background:rgba(20,27,56,0.7); border:1px solid rgba(217,179,120,0.3); border-radius:10px;
     color:var(--moonlight); font-size:.9rem; padding:6px 4px;

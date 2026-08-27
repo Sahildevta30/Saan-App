@@ -994,7 +994,15 @@
     const el = document.getElementById('songNowPlaying');
     if(songNowPlayingVal && songNowPlayingVal.by && songNowPlayingVal.by !== myName && (Date.now() - (songNowPlayingVal.ts||0)) < 3*60*60*1000){
       el.style.display = 'flex';
-      el.innerHTML = '<span class="pulseDot"></span>' + songNowPlayingVal.by + ' is listening to something 🎧';
+      el.innerHTML = '<span class="pulseDot"></span>' + songNowPlayingVal.by + ' is listening to something 🎧 <button id="joinListenBtn" type="button">▶ Listen too</button>';
+      const joinBtn = document.getElementById('joinListenBtn');
+      if(joinBtn){
+        joinBtn.addEventListener('click', function(){
+          const c = spotifyControllers[songNowPlayingVal.songId];
+          if(c){ c.play(); }
+          else { showToast('Open the Songs list and tap that card to join in 🎧'); }
+        });
+      }
     } else {
       el.style.display = 'none';
     }
@@ -1010,9 +1018,28 @@
     return { type: m[1], id: m[2] };
   }
 
+  /* Spotify iFrame API — lets us control playback with our own button instead of
+     depending on Spotify's embed to render its own play control (which can get stuck
+     on slow connections, per user report). */
+  let spotifyApiReady = false;
+  let spotifyIFrameAPI = null;
+  let spotifyApiQueue = [];
+  window.onSpotifyIframeApiReady = function(IFrameAPI){
+    spotifyIFrameAPI = IFrameAPI;
+    spotifyApiReady = true;
+    spotifyApiQueue.forEach(function(fn){ fn(IFrameAPI); });
+    spotifyApiQueue = [];
+  };
+  function withSpotifyAPI(cb){
+    if(spotifyApiReady) cb(spotifyIFrameAPI);
+    else spotifyApiQueue.push(cb);
+  }
+  const spotifyControllers = {}; // songId -> controller, so the 'listen together' banner can trigger play
+
   function renderSongs(snap){
     const val = snap.val();
     songsListEl.innerHTML = '';
+    spotifyApiQueue = spotifyApiQueue.filter(function(){ return false; }); // drop stale mount requests from previous render
     if(!val){ songsListEl.innerHTML = '<div id="vnEmpty">No songs yet — paste a Spotify link below 🎵</div>'; return; }
     let entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
     entries.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
@@ -1035,31 +1062,43 @@
       const meta = document.createElement('span');
       meta.className = 'songMeta';
       meta.textContent = (item.spotifyType==='playlist'?'Playlist':item.spotifyType==='album'?'Album':item.spotifyType==='episode'?'Episode':item.spotifyType==='show'?'Show':'Track') + ' · ' + item.addedBy;
-      const listenBtn = document.createElement('button');
-      listenBtn.className = 'songListenBtn';
-      listenBtn.textContent = '🎧 Listening';
-      listenBtn.addEventListener('click', function(){
-        db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
-        showToast("Let " + otherPersonName() + " know you're listening 🎧");
-      });
       const del = document.createElement('button');
       del.className = 'songDel'; del.textContent = '🗑';
       del.addEventListener('click', function(){ if(confirm('Remove this song from the playlist?')) db.ref('songs/' + item.id).remove(); });
-      hdr.appendChild(badge); hdr.appendChild(meta); hdr.appendChild(listenBtn); hdr.appendChild(del);
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://open.spotify.com/embed/' + item.spotifyType + '/' + item.spotifyId + '?utm_source=generator&theme=0';
-      iframe.height = (item.spotifyType === 'track') ? 152 : 352;
-      iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-      const openLink = document.createElement('a');
-      openLink.className = 'songOpenLink';
-      openLink.href = 'https://open.spotify.com/' + item.spotifyType + '/' + item.spotifyId;
-      openLink.target = '_blank';
-      openLink.rel = 'noopener';
-      openLink.innerHTML = '▶ Play on Spotify';
+      hdr.appendChild(badge); hdr.appendChild(meta); hdr.appendChild(del);
+      const embedHost = document.createElement('div');
+      embedHost.className = 'spotifyEmbedHost';
+      const playBtn = document.createElement('button');
+      playBtn.type = 'button';
+      playBtn.className = 'songOpenLink';
+      playBtn.innerHTML = '▶ Loading player…';
+      playBtn.disabled = true;
       card.appendChild(hdr);
-      card.appendChild(iframe);
-      card.appendChild(openLink);
+      card.appendChild(embedHost);
+      card.appendChild(playBtn);
       songsListEl.appendChild(card);
+
+      withSpotifyAPI(function(IFrameAPI){
+        if(!embedHost.isConnected) return; // card was removed by a re-render before the API finished loading
+        const options = {
+          uri: 'spotify:' + item.spotifyType + ':' + item.spotifyId,
+          width: '100%',
+          height: (item.spotifyType === 'track') ? 152 : 352
+        };
+        IFrameAPI.createController(embedHost, options, function(controller){
+          spotifyControllers[item.id] = controller;
+          playBtn.disabled = false;
+          playBtn.innerHTML = '▶ Play in Saan';
+          controller.addListener('playback_update', function(e){
+            const isPlaying = !!(e && e.data && e.data.isPaused === false);
+            playBtn.innerHTML = isPlaying ? '⏸ Playing…' : '▶ Play in Saan';
+          });
+          playBtn.addEventListener('click', function(){
+            controller.togglePlay();
+            db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+          });
+        });
+      });
     });
   }
 
