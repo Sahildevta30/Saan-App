@@ -304,6 +304,7 @@
       else if(game === 'race'){ openRace(); }
       else if(game === 'flamingo'){ openFlamingo(); }
       else if(game === 'watchparty'){ openWatchParty(); }
+      else if(game === 'reels'){ openReels(); }
       else if(game === 'snakeladder'){ openSnakeLadder(); }
       else if(game === 'ludo'){ openLudo(); }
       else if(game === 'carrom'){ openCarrom(); }
@@ -1907,6 +1908,156 @@
   });
 
   let wpPresenceRef = null;
+  /* ---- Reels (vertical YouTube Shorts feed) ---- */
+  const reelsScreen = document.getElementById('reelsScreen');
+  const reelsFeed = document.getElementById('reelsFeed');
+  const reelsMsg = document.getElementById('reelsMsg');
+  const REELS_QUERIES = [
+    '#shorts trending', 'funny shorts', 'shorts viral', 'dance shorts', 'comedy shorts',
+    'satisfying shorts', 'life hacks shorts', 'music shorts', 'travel shorts', 'food shorts',
+    'cute animals shorts', 'shorts of the day', 'amazing shorts', 'crazy shorts'
+  ];
+  let reelsLoading = false;
+  let reelsSeenIds = {};
+  let reelsObserver = null;
+  let reelsOpened = false;
+
+  function reelsShowMsg(html){
+    reelsMsg.innerHTML = html;
+    reelsMsg.style.display = 'flex';
+  }
+  function reelsHideMsg(){ reelsMsg.style.display = 'none'; }
+
+  function ytEmbedUrl(id, autoplay){
+    return 'https://www.youtube.com/embed/' + id + '?playsinline=1&modestbranding=1&rel=0'
+      + (autoplay ? '&autoplay=1&mute=1' : '');
+  }
+
+  function reelsSetupCard(){
+    const card = document.createElement('div');
+    card.className = 'reelLoadingCard';
+    card.style.flexDirection = 'column';
+    card.style.gap = '10px';
+    card.style.padding = '30px';
+    card.style.textAlign = 'center';
+    card.innerHTML = 'Reels needs a free YouTube API key to fetch videos.<br><br>'
+      + '<a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener" style="color:var(--gold);">Get one free →</a><br><br>'
+      + 'Then paste it into <code>YOUTUBE_API_KEY</code> in firebase-config.js.';
+    return card;
+  }
+
+  function fetchReelsBatch(){
+    if(reelsLoading) return;
+    if(!YOUTUBE_API_KEY || YOUTUBE_API_KEY.indexOf('PASTE_') === 0){
+      reelsHideMsg();
+      reelsFeed.innerHTML = '';
+      reelsFeed.appendChild(reelsSetupCard());
+      return;
+    }
+    reelsLoading = true;
+    const query = REELS_QUERIES[Math.floor(Math.random() * REELS_QUERIES.length)];
+    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short'
+      + '&order=viewCount&maxResults=25&q=' + encodeURIComponent(query) + '&key=' + YOUTUBE_API_KEY;
+    fetch(url).then(function(r){
+      if(!r.ok) throw new Error('yt_error_' + r.status);
+      return r.json();
+    }).then(function(data){
+      reelsLoading = false;
+      const items = (data.items || []).filter(function(it){
+        return it.id && it.id.videoId && !reelsSeenIds[it.id.videoId];
+      });
+      if(items.length === 0){
+        if(reelsFeed.children.length === 0){ reelsShowMsg('No reels found right now — pull down or reopen to retry 🎬'); }
+        return;
+      }
+      items.forEach(function(it){
+        reelsSeenIds[it.id.videoId] = true;
+        appendReelCard(it.id.videoId, it.snippet && it.snippet.title);
+      });
+    }).catch(function(err){
+      reelsLoading = false;
+      if(reelsFeed.children.length === 0){
+        const msg = ('' + err.message).indexOf('403') !== -1
+          ? 'That YouTube API key was rejected (check it\'s enabled for "YouTube Data API v3" in Google Cloud Console).'
+          : 'Reels are loading slowly or failed — check your connection and reopen.';
+        reelsShowMsg(msg);
+      }
+    });
+  }
+
+  function appendReelCard(videoId, title){
+    const card = document.createElement('div');
+    card.className = 'reelCard';
+    card.setAttribute('data-video-id', videoId);
+    if(title){
+      const cap = document.createElement('div');
+      cap.className = 'reelCardCaption';
+      cap.textContent = title;
+      card.appendChild(cap);
+    }
+    reelsFeed.appendChild(card);
+    if(reelsObserver) reelsObserver.observe(card);
+    // auto-load more once we're a few cards from the end
+    if(reelsFeed.children.length % 25 === 22){ /* pre-fetch handled by scroll listener below */ }
+  }
+
+  function reelsActivateCard(card){
+    if(card.querySelector('iframe')) return; // already active
+    const videoId = card.getAttribute('data-video-id');
+    const iframe = document.createElement('iframe');
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.src = ytEmbedUrl(videoId, true);
+    card.insertBefore(iframe, card.firstChild);
+  }
+  function reelsDeactivateCard(card){
+    const iframe = card.querySelector('iframe');
+    if(iframe) iframe.remove();
+  }
+
+  function reelsReactivateVisible(){
+    const cards = reelsFeed.querySelectorAll('.reelCard');
+    for(let i=0;i<cards.length;i++){
+      const r = cards[i].getBoundingClientRect();
+      const feedR = reelsFeed.getBoundingClientRect();
+      if(r.top >= feedR.top - 5 && r.top < feedR.bottom - feedR.height*0.4){
+        reelsActivateCard(cards[i]);
+        break;
+      }
+    }
+  }
+
+  function openReels(){
+    reelsScreen.classList.add('show');
+    reelsHideMsg();
+    if(!reelsOpened){
+      reelsOpened = true;
+      if(!reelsObserver){
+        reelsObserver = new IntersectionObserver(function(entries){
+          entries.forEach(function(entry){
+            if(entry.isIntersecting && entry.intersectionRatio > 0.6){ reelsActivateCard(entry.target); }
+            else { reelsDeactivateCard(entry.target); }
+          });
+        }, { root: reelsFeed, threshold: [0, 0.6, 1] });
+      }
+      fetchReelsBatch();
+      let scrollDebounce = null;
+      reelsFeed.addEventListener('scroll', function(){
+        if(scrollDebounce) clearTimeout(scrollDebounce);
+        scrollDebounce = setTimeout(function(){
+          const nearEnd = reelsFeed.scrollTop + reelsFeed.clientHeight > reelsFeed.scrollHeight - reelsFeed.clientHeight * 2;
+          if(nearEnd) fetchReelsBatch();
+        }, 250);
+      });
+    } else {
+      setTimeout(reelsReactivateVisible, 50); // display:none→flex doesn't always re-fire IntersectionObserver
+    }
+  }
+  document.getElementById('reelsCloseBtn').addEventListener('click', function(){
+    reelsScreen.classList.remove('show');
+    document.querySelectorAll('.reelCard').forEach(reelsDeactivateCard); // stop all playback
+  });
+
   function openWatchParty(){
     wpEl.classList.add('show');
     const ref = db.ref('watchParty');
@@ -4438,7 +4589,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=13').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=14').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){

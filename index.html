@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 <div id="app">
@@ -159,6 +159,10 @@
         <span class="ghIcon">&#127916;</span>
         <span class="ghName">Watch Together</span>
       </button>
+      <button class="ghCard" data-game="reels">
+        <span class="ghIcon">&#128241;</span>
+        <span class="ghName">Reels</span>
+      </button>
     </div>
 
     <div class="ghList catSection" id="cat-music" style="display:none;">
@@ -231,7 +235,7 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v13</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v14</div>
     <div id="songNowPlaying" style="display:none;"></div>
     <div id="songSourceTabs">
       <button class="sourceTab active" data-source="youtube">&#127916; YouTube</button>
@@ -270,6 +274,16 @@
     <div id="songDetailLoadHint" class="songLoadHint">Loading player…</div>
     <div id="songDetailEmbedHost"></div>
     <a id="songDetailFallback" class="songFallbackLink" target="_blank" rel="noopener">&#8599; Open externally instead</a>
+  </div>
+
+  <div id="reelsScreen" class="gameScreen">
+    <div id="reelsTopBar">
+      <button class="iconBtn" id="reelsCloseBtn" aria-label="Close">&#10094;</button>
+      <span class="brand" style="font-size:16px;">Reels</span>
+      <span style="width:38px;"></span>
+    </div>
+    <div id="reelsFeed"></div>
+    <div id="reelsMsg" style="display:none;"></div>
   </div>
 
   <div id="wordChain" class="gameScreen">
@@ -578,6 +592,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=13" defer></script>
+<script src="app.js?v=14" defer></script>
 </body>
 </html>

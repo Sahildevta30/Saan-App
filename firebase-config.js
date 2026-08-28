@@ -16,6 +16,12 @@ const firebaseConfig = {
     "ananya@saan.app": "Ananya"
   };
 
+  /* ---------------- REELS (YouTube Shorts feed) ----------------
+     Get a free key: console.cloud.google.com → New Project → enable
+     "YouTube Data API v3" → Credentials → Create API key.
+     Paste it below between the quotes. */
+  const YOUTUBE_API_KEY = "PASTE_YOUR_YOUTUBE_API_KEY_HERE";
+
   /* ---------------- PUSH NOTIFICATIONS (FCM) ---------------- */
   const VAPID_KEY = "BEzJEPiOY1hxO5EWRoFioPvOLTGvnRPXTYEUFfeeQ4sfbdEsuFJ4rjJ5WZ40j51uoffHHZm5VAle3_82JOXRg1c";
   const PUSH_WORKER_URL = "https://saan-push.suryasahilsskg.workers.dev";
