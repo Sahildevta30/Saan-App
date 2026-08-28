@@ -1004,8 +1004,7 @@
             const item = s.val();
             if(!item){ showToast('That song was removed from the playlist.'); return; }
             songsEl.classList.add('show');
-            const typeLabel = item.spotifyType==='playlist'?'Playlist':item.spotifyType==='album'?'Album':item.spotifyType==='episode'?'Episode':item.spotifyType==='show'?'Show':'Track';
-            openSongDetail(Object.assign({id: songNowPlayingVal.songId}, item), typeLabel);
+            openSongDetail(Object.assign({id: songNowPlayingVal.songId}, item), songTypeLabel(item));
           });
         });
       }
@@ -1022,6 +1021,19 @@
     const m = url.match(/open\.spotify\.com\/(track|playlist|album|episode|show)\/([a-zA-Z0-9]+)/);
     if(!m) return null;
     return { type: m[1], id: m[2] };
+  }
+
+  function parseYouTubeLink(url){
+    const listMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    const vidMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/);
+    if(vidMatch) return { type: 'video', id: vidMatch[1] };
+    if(listMatch) return { type: 'playlist', id: listMatch[1] };
+    return null;
+  }
+
+  function songTypeLabel(item){
+    if(item.youtubeId) return item.youtubeType === 'playlist' ? 'Playlist' : 'Video';
+    return item.spotifyType==='playlist'?'Playlist':item.spotifyType==='album'?'Album':item.spotifyType==='episode'?'Episode':item.spotifyType==='show'?'Show':'Track';
   }
 
   /* Spotify iFrame API — lets us control playback with our own button instead of
@@ -1064,7 +1076,7 @@
       badge.style.background = mood.color + '33';
       badge.style.color = mood.color;
       badge.textContent = mood.emoji;
-      const typeLabel = item.spotifyType==='playlist'?'Playlist':item.spotifyType==='album'?'Album':item.spotifyType==='episode'?'Episode':item.spotifyType==='show'?'Show':'Track';
+      const typeLabel = songTypeLabel(item);
       const meta = document.createElement('span');
       meta.className = 'songMeta';
       meta.textContent = typeLabel + ' · ' + item.addedBy;
@@ -1107,13 +1119,33 @@
   function openSongDetail(item, typeLabel){
     closeSongDetail(); // in case one was already open
     document.getElementById('songDetailTitle').textContent = typeLabel + ' · ' + item.addedBy;
+    songDetailScreen.classList.add('show');
+    db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
+
+    if(item.youtubeId){
+      songDetailFallback.href = item.youtubeType === 'playlist'
+        ? 'https://www.youtube.com/playlist?list=' + item.youtubeId
+        : 'https://www.youtube.com/watch?v=' + item.youtubeId;
+      songDetailFallback.innerHTML = '&#8599; Open in YouTube app instead';
+      songDetailLoadHint.style.display = 'none';
+      const iframe = document.createElement('iframe');
+      iframe.width = '100%';
+      iframe.height = '100%';
+      iframe.frameBorder = '0';
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.src = item.youtubeType === 'playlist'
+        ? 'https://www.youtube.com/embed/videoseries?list=' + item.youtubeId + '&autoplay=1'
+        : 'https://www.youtube.com/embed/' + item.youtubeId + '?autoplay=1&rel=0';
+      songDetailEmbedHost.appendChild(iframe);
+      return;
+    }
+
     songDetailFallback.href = 'https://open.spotify.com/' + item.spotifyType + '/' + item.spotifyId;
+    songDetailFallback.innerHTML = '&#8599; Open in Spotify app instead';
     songDetailLoadHint.textContent = 'Loading player…';
     songDetailLoadHint.classList.remove('slow');
     songDetailLoadHint.style.display = '';
-    songDetailScreen.classList.add('show');
-
-    db.ref('songs_nowPlaying').set({ songId: item.id, by: myName, ts: firebase.database.ServerValue.TIMESTAMP });
 
     const loadTimeout = setTimeout(function(){
       songDetailLoadHint.textContent = 'Taking a while to load — try "Open in Spotify" below, or check your connection.';
@@ -1135,12 +1167,21 @@
   function addSong(){
     const url = songTitleInput.value.trim();
     if(!url) return;
-    const parsed = parseSpotifyLink(url);
-    if(!parsed){
-      showToast("That doesn't look like a Spotify link. Open Spotify → Share → Copy link.", 'error');
+    const mood = document.getElementById('songMoodInput').value;
+    const yt = parseYouTubeLink(url);
+    if(yt){
+      db.ref('songs').push({
+        youtubeType: yt.type, youtubeId: yt.id, mood: mood,
+        addedBy: myName, ts: firebase.database.ServerValue.TIMESTAMP
+      });
+      songTitleInput.value = '';
       return;
     }
-    const mood = document.getElementById('songMoodInput').value;
+    const parsed = parseSpotifyLink(url);
+    if(!parsed){
+      showToast("That doesn't look like a YouTube (or Spotify) link. Open YouTube → Share → Copy link.", 'error');
+      return;
+    }
     db.ref('songs').push({
       spotifyType: parsed.type, spotifyId: parsed.id, mood: mood,
       addedBy: myName, ts: firebase.database.ServerValue.TIMESTAMP
@@ -4385,7 +4426,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=8').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=11').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){

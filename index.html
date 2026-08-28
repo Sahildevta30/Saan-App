@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <div id="app">
@@ -231,7 +231,7 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v10</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v11</div>
     <div id="songNowPlaying" style="display:none;"></div>
     <div id="songMoodFilter">
       <button class="moodChip active" data-mood="all">&#127925; All</button>
@@ -252,7 +252,7 @@
         <option value="workout">&#128170;</option>
         <option value="favorite">&#11088;</option>
       </select>
-      <input id="songTitleInput" type="text" placeholder="Paste Spotify link here..." />
+      <input id="songTitleInput" type="text" placeholder="Paste YouTube link here..." />
       <button id="songAddBtn">&#10148;</button>
     </div>
   </div>
@@ -265,7 +265,7 @@
     </div>
     <div id="songDetailLoadHint" class="songLoadHint">Loading player…</div>
     <div id="songDetailEmbedHost"></div>
-    <a id="songDetailFallback" class="songFallbackLink" target="_blank" rel="noopener">&#8599; Open in Spotify app instead</a>
+    <a id="songDetailFallback" class="songFallbackLink" target="_blank" rel="noopener">&#8599; Open externally instead</a>
   </div>
 
   <div id="wordChain" class="gameScreen">
@@ -574,6 +574,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=10" defer></script>
+<script src="app.js?v=11" defer></script>
 </body>
 </html>
