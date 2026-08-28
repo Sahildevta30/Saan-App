@@ -968,6 +968,7 @@
     favorite: { emoji:'⭐', label:'Favorite', color:'#d9b378' }
   };
   let songMoodFilter = 'all';
+  let songSourceFilter = 'youtube';
   let songNowPlayingRef = null;
 
   function openSongs(){
@@ -984,6 +985,15 @@
       document.querySelectorAll('.moodChip').forEach(function(c){ c.classList.remove('active'); });
       chip.classList.add('active');
       songMoodFilter = chip.getAttribute('data-mood');
+      db.ref('songs').once('value').then(renderSongs);
+    });
+  });
+
+  document.querySelectorAll('.sourceTab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.sourceTab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      songSourceFilter = tab.getAttribute('data-source');
       db.ref('songs').once('value').then(renderSongs);
     });
   });
@@ -1057,8 +1067,10 @@
   function renderSongs(snap){
     const val = snap.val();
     songsListEl.innerHTML = '';
-    if(!val){ songsListEl.innerHTML = '<div id="vnEmpty">No songs yet — paste a Spotify link below 🎵</div>'; return; }
+    const sourceLabel = songSourceFilter === 'youtube' ? 'YouTube' : 'Spotify';
+    if(!val){ songsListEl.innerHTML = '<div id="vnEmpty">No songs yet — paste a ' + sourceLabel + ' link below 🎵</div>'; return; }
     let entries = Object.keys(val).map(function(k){ return Object.assign({id:k}, val[k]); });
+    entries = entries.filter(function(e){ return songSourceFilter === 'youtube' ? !!e.youtubeId : !e.youtubeId; });
     entries.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
     if(songMoodFilter !== 'all'){
       entries = entries.filter(function(e){ return (e.mood||'chill') === songMoodFilter; });
@@ -4426,7 +4438,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=12').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=13').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){

@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 <div id="app">
@@ -231,8 +231,12 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v12</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v13</div>
     <div id="songNowPlaying" style="display:none;"></div>
+    <div id="songSourceTabs">
+      <button class="sourceTab active" data-source="youtube">&#127916; YouTube</button>
+      <button class="sourceTab" data-source="spotify">&#127911; Spotify</button>
+    </div>
     <div id="songMoodFilter">
       <button class="moodChip active" data-mood="all">&#127925; All</button>
       <button class="moodChip" data-mood="romantic">&#10084;&#65039; Romantic</button>
@@ -574,6 +578,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=12" defer></script>
+<script src="app.js?v=13" defer></script>
 </body>
 </html>
