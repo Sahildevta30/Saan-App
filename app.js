@@ -1135,8 +1135,8 @@
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
       iframe.allowFullscreen = true;
       iframe.src = item.youtubeType === 'playlist'
-        ? 'https://www.youtube.com/embed/videoseries?list=' + item.youtubeId + '&autoplay=1'
-        : 'https://www.youtube.com/embed/' + item.youtubeId + '?autoplay=1&rel=0';
+        ? 'https://www.youtube.com/embed/videoseries?list=' + item.youtubeId + '&autoplay=1&modestbranding=1'
+        : 'https://www.youtube.com/embed/' + item.youtubeId + '?autoplay=1&rel=0&modestbranding=1';
       songDetailEmbedHost.appendChild(iframe);
       return;
     }
@@ -4426,7 +4426,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=11').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=12').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
