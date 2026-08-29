@@ -859,15 +859,22 @@
 
   /* ---- In-game chat (shared across Pool/Carrom/Ludo/Snake&Ladder) ---- */
   .gameChatBtn{
-    position:absolute; right:14px; bottom:14px; z-index:5; width:46px; height:46px; border-radius:50%;
+    position:absolute; right:14px; bottom:14px; z-index:7; width:46px; height:46px; border-radius:50%;
     background:var(--gold); color:#0d1224; border:none; font-size:1.2rem; box-shadow:0 4px 14px rgba(0,0,0,0.4);
   }
   .gameChatPanel{
-    position:absolute; left:0; right:0; bottom:0; z-index:6; height:44%; max-height:340px;
+    position:absolute; left:0; right:0; bottom:0; z-index:6; height:38%; max-height:300px;
     background:rgba(10,14,30,0.97); border-top:1px solid rgba(217,179,120,0.3);
     display:none; flex-direction:column; border-radius:16px 16px 0 0;
   }
   .gameChatPanel.show{ display:flex; }
+  .gameChatPanelHdr{
+    display:flex; align-items:center; justify-content:space-between; padding:10px 14px; flex:none;
+    border-bottom:1px solid rgba(217,179,120,0.15); font-family:'Jost',sans-serif; font-size:.8rem; color:var(--gold);
+  }
+  .gameChatCloseBtn{
+    background:none; border:none; color:var(--moonlight); font-size:1rem; padding:4px 8px; cursor:pointer;
+  }
   .gameChatList{ flex:1; overflow-y:auto; padding:10px 14px; display:flex; flex-direction:column; gap:6px; }
   .gameChatList .gcMsg{ font-size:.75rem; color:var(--moonlight); font-family:'Jost',sans-serif; }
   .gameChatList .gcMsg b{ color:var(--gold); }

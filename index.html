@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 <div id="app">
@@ -235,7 +235,7 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v18</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v19</div>
     <div id="songNowPlaying" style="display:none;"></div>
     <div id="songSourceTabs">
       <button class="sourceTab active" data-source="youtube">&#127916; YouTube</button>
@@ -368,6 +368,7 @@
     <button id="slResetBtn" class="ghResetBtn">New game</button>
     <button class="gameChatBtn" id="slChatBtn">&#128172;</button>
     <div class="gameChatPanel" id="slChatPanel">
+      <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="slChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="slChatList"></div>
       <div class="gameChatInputRow"><input type="text" id="slChatInput" placeholder="Message..."><button id="slChatSendBtn">&#10148;</button></div>
     </div>
@@ -391,6 +392,7 @@
     <button id="ludoResetBtn" class="ghResetBtn">New game</button>
     <button class="gameChatBtn" id="ludoChatBtn">&#128172;</button>
     <div class="gameChatPanel" id="ludoChatPanel">
+      <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="ludoChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="ludoChatList"></div>
       <div class="gameChatInputRow"><input type="text" id="ludoChatInput" placeholder="Message..."><button id="ludoChatSendBtn">&#10148;</button></div>
     </div>
@@ -416,6 +418,7 @@
     <button id="carromResetBtn" class="ghResetBtn">New game</button>
     <button class="gameChatBtn" id="carromChatBtn">&#128172;</button>
     <div class="gameChatPanel" id="carromChatPanel">
+      <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="carromChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="carromChatList"></div>
       <div class="gameChatInputRow"><input type="text" id="carromChatInput" placeholder="Message..."><button id="carromChatSendBtn">&#10148;</button></div>
     </div>
@@ -437,6 +440,7 @@
     <button id="poolResetBtn" class="ghResetBtn">New game</button>
     <button class="gameChatBtn" id="poolChatBtn">&#128172;</button>
     <div class="gameChatPanel" id="poolChatPanel">
+      <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="poolChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="poolChatList"></div>
       <div class="gameChatInputRow"><input type="text" id="poolChatInput" placeholder="Message..."><button id="poolChatSendBtn">&#10148;</button></div>
     </div>
@@ -622,6 +626,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=18" defer></script>
+<script src="app.js?v=19" defer></script>
 </body>
 </html>

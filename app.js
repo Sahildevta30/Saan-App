@@ -131,6 +131,7 @@
     const list = document.getElementById(prefix + 'ChatList');
     const input = document.getElementById(prefix + 'ChatInput');
     const sendBtn = document.getElementById(prefix + 'ChatSendBtn');
+    const closeBtn = document.getElementById(prefix + 'ChatCloseBtn');
     if(!btn) return;
     let ref = null;
     function render(snap){
@@ -148,14 +149,18 @@
       db.ref('messages').push({ sender: myName, text: text, ts: Date.now() });
       input.value = '';
     }
-    btn.addEventListener('click', function(){
-      const opening = !panel.classList.contains('show');
-      panel.classList.toggle('show');
-      if(opening && !ref){
+    function openPanel(){
+      panel.classList.add('show');
+      if(!ref){
         ref = db.ref('messages').limitToLast(25);
         ref.on('value', render);
       }
+    }
+    function closePanel(){ panel.classList.remove('show'); }
+    btn.addEventListener('click', function(){
+      if(panel.classList.contains('show')) closePanel(); else openPanel();
     });
+    if(closeBtn) closeBtn.addEventListener('click', closePanel);
     sendBtn.addEventListener('click', send);
     input.addEventListener('keydown', function(e){ if(e.key === 'Enter') send(); });
   }
@@ -4759,7 +4764,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=18').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=19').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
