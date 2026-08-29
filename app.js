@@ -4589,7 +4589,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=14').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=15').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){

@@ -20,7 +20,7 @@ const firebaseConfig = {
      Get a free key: console.cloud.google.com → New Project → enable
      "YouTube Data API v3" → Credentials → Create API key.
      Paste it below between the quotes. */
-  const YOUTUBE_API_KEY = "PASTE_YOUR_YOUTUBE_API_KEY_HERE";
+  const YOUTUBE_API_KEY = "AIzaSyDhXpwowPhfXdnBcXCHvtS2ZVYxpZNFfRM";
 
   /* ---------------- PUSH NOTIFICATIONS (FCM) ---------------- */
   const VAPID_KEY = "BEzJEPiOY1hxO5EWRoFioPvOLTGvnRPXTYEUFfeeQ4sfbdEsuFJ4rjJ5WZ40j51uoffHHZm5VAle3_82JOXRg1c";
