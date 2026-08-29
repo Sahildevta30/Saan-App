@@ -480,14 +480,16 @@
   #slOverlay{ position:absolute; pointer-events:none; z-index:1; }
   #slBoard{
     display:grid; grid-template-columns:repeat(10, 1fr); grid-template-rows:repeat(10, 1fr);
-    width:min(92vw, 380px); height:min(92vw, 380px); border:2px solid rgba(217,179,120,0.4); border-radius:10px; overflow:hidden;
+    width:min(92vw, 380px); height:min(92vw, 380px); border:3px solid #7a1f33; border-radius:10px; overflow:hidden;
+    background:#fdf6ec;
   }
   .slCell{
-    position:relative; border:.5px solid rgba(217,179,120,0.12); display:flex; align-items:flex-start; justify-content:flex-end;
-    font-size:.5rem; color:rgba(230,220,200,0.4); padding:2px; background:rgba(20,27,56,0.4);
+    position:relative; border:.5px solid rgba(122,31,51,0.15); display:flex; align-items:flex-start; justify-content:flex-end;
+    font-size:.55rem; font-weight:700; color:rgba(90,40,20,0.65); padding:2px; background:#fdf6ec;
   }
-  .slCell.snakeHead{ background:rgba(160,40,50,0.35); }
-  .slCell.ladderBot{ background:rgba(120,160,90,0.3); }
+  .slCell.alt{ background:#fbe4ea; }
+  .slCell.snakeHead{ background:rgba(220,60,70,0.45); }
+  .slCell.ladderBot{ background:rgba(110,180,90,0.4); }
   .slToken{
     position:absolute; width:38%; height:38%; border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-size:.7rem; transition:all .4s ease; z-index:2; box-shadow:0 1px 4px rgba(0,0,0,0.5);
@@ -854,3 +856,39 @@
   .poolPowerFill, .carromPowerFill{
     width:100%; background:linear-gradient(0deg,#4ade80,#facc15,#ef4444); height:0%;
   }
+
+  /* ---- In-game chat (shared across Pool/Carrom/Ludo/Snake&Ladder) ---- */
+  .gameChatBtn{
+    position:absolute; right:14px; bottom:14px; z-index:5; width:46px; height:46px; border-radius:50%;
+    background:var(--gold); color:#0d1224; border:none; font-size:1.2rem; box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  }
+  .gameChatPanel{
+    position:absolute; left:0; right:0; bottom:0; z-index:6; height:44%; max-height:340px;
+    background:rgba(10,14,30,0.97); border-top:1px solid rgba(217,179,120,0.3);
+    display:none; flex-direction:column; border-radius:16px 16px 0 0;
+  }
+  .gameChatPanel.show{ display:flex; }
+  .gameChatList{ flex:1; overflow-y:auto; padding:10px 14px; display:flex; flex-direction:column; gap:6px; }
+  .gameChatList .gcMsg{ font-size:.75rem; color:var(--moonlight); font-family:'Jost',sans-serif; }
+  .gameChatList .gcMsg b{ color:var(--gold); }
+  .gameChatInputRow{ display:flex; gap:8px; padding:10px 14px; border-top:1px solid rgba(217,179,120,0.15); flex:none; }
+  .gameChatInputRow input{
+    flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(217,179,120,0.25); border-radius:10px;
+    padding:8px 12px; color:var(--moonlight); font-family:'Jost',sans-serif; font-size:.8rem;
+  }
+  .gameChatInputRow button{
+    background:var(--gold); color:#0d1224; border:none; border-radius:10px; padding:8px 14px; font-weight:700;
+  }
+
+  /* ---- Pool/Carrom player avatar bar ---- */
+  #poolPlayerBar, .poolPlayerBarStatic{
+    display:flex; align-items:center; justify-content:space-between; padding:8px 16px; flex:none;
+  }
+  .poolPlayerBadge{ display:flex; align-items:center; gap:8px; }
+  .poolPlayerBadge.right{ flex-direction:row-reverse; }
+  .poolAvatarCircle{
+    width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-family:'Jost',sans-serif; font-size:.9rem; border:2px solid rgba(255,255,255,0.4);
+    box-shadow:0 2px 6px rgba(0,0,0,0.35);
+  }
+  .poolPlayerName{ font-family:'Jost',sans-serif; font-size:.78rem; color:var(--moonlight); font-weight:600; }

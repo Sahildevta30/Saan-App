@@ -122,6 +122,47 @@
     window.removeEventListener('resize', forceLandscapeUpdate);
     window.removeEventListener('orientationchange', forceLandscapeUpdate);
   }
+
+  /* In-game chat — lightweight shared panel reused across Pool/Carrom/Ludo/Snake&Ladder,
+     backed by the same 'messages' ref as the main chat. */
+  function setupGameChat(prefix){
+    const btn = document.getElementById(prefix + 'ChatBtn');
+    const panel = document.getElementById(prefix + 'ChatPanel');
+    const list = document.getElementById(prefix + 'ChatList');
+    const input = document.getElementById(prefix + 'ChatInput');
+    const sendBtn = document.getElementById(prefix + 'ChatSendBtn');
+    if(!btn) return;
+    let ref = null;
+    function render(snap){
+      const val = snap.val() || {};
+      const items = Object.keys(val).map(function(k){ return val[k]; }).sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
+      list.innerHTML = items.map(function(m){
+        if(!m.text) return '';
+        return '<div class="gcMsg"><b>' + escapeHtml(m.sender||'') + ':</b> ' + escapeHtml(m.text) + '</div>';
+      }).join('');
+      list.scrollTop = list.scrollHeight;
+    }
+    function send(){
+      const text = input.value.trim();
+      if(!text) return;
+      db.ref('messages').push({ sender: myName, text: text, ts: Date.now() });
+      input.value = '';
+    }
+    btn.addEventListener('click', function(){
+      const opening = !panel.classList.contains('show');
+      panel.classList.toggle('show');
+      if(opening && !ref){
+        ref = db.ref('messages').limitToLast(25);
+        ref.on('value', render);
+      }
+    });
+    sendBtn.addEventListener('click', send);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter') send(); });
+  }
+  setupGameChat('pool');
+  setupGameChat('carrom');
+  setupGameChat('ludo');
+  setupGameChat('sl');
   const blEl = document.getElementById('bucketList');
   const calEl = document.getElementById('calendarScreen');
   const drawEl = document.getElementById('drawingBoard');
@@ -2384,7 +2425,7 @@
         const num = slCellNumber(r,c);
         slCellPos[num] = { row:r, col:c };
         const cell = document.createElement('div');
-        cell.className = 'slCell';
+        cell.className = 'slCell' + ((r+c)%2===0 ? ' alt' : '');
         cell.id = 'slc-' + num;
         if(SL_SNAKES[num]) cell.classList.add('snakeHead');
         if(SL_LADDERS[num]) cell.classList.add('ladderBot');
@@ -2792,7 +2833,8 @@
     Ananya: [[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]]
   };
   const LUDO_HOME_BASE_RC = { Sahil: [1.5,1.5], Ananya: [11.5,11.5] };
-  const LUDO_COLOR = { Sahil: '#c23a54', Ananya: '#5f7a9e' };
+  const LUDO_COLOR = { Sahil: '#e63946', Ananya: '#2563eb' };
+  const LUDO_COLOR_DARK = { Sahil: '#b3212f', Ananya: '#1743a6' };
 
   function ludoCellBox(){
     return Math.min(ludoCanvas.width, ludoCanvas.height) / 15;
@@ -2807,42 +2849,49 @@
     ludoCtx.clearRect(0,0,w,h);
     const cell = ludoCellBox();
 
-    ludoCtx.fillStyle = '#141b38'; ludoCtx.fillRect(0,0,w,h);
+    ludoCtx.fillStyle = '#f5f0e6'; ludoCtx.fillRect(0,0,w,h);
 
     function drawHomeQuadrant(r0,c0,color){
       ludoCtx.fillStyle = color;
-      ludoCtx.globalAlpha = 0.22;
       ludoCtx.fillRect(c0*cell, r0*cell, cell*6, cell*6);
-      ludoCtx.globalAlpha = 1;
-      ludoCtx.strokeStyle = 'rgba(217,179,120,0.4)'; ludoCtx.lineWidth = 1.5;
+      ludoCtx.strokeStyle = 'rgba(0,0,0,0.25)'; ludoCtx.lineWidth = 1.5;
       ludoCtx.strokeRect(c0*cell, r0*cell, cell*6, cell*6);
-      ludoCtx.fillStyle = color; ludoCtx.globalAlpha = 0.35;
+      // white inner panel with 4 token slots
+      ludoCtx.fillStyle = '#fff';
+      const pad = cell*1.1;
       if(ludoCtx.roundRect){
         ludoCtx.beginPath();
-        ludoCtx.roundRect((c0+1.2)*cell,(r0+1.2)*cell, cell*3.6, cell*3.6, cell*0.4);
+        ludoCtx.roundRect((c0)*cell+pad,(r0)*cell+pad, cell*6-pad*2, cell*6-pad*2, cell*0.5);
         ludoCtx.fill();
       } else {
-        ludoCtx.fillRect((c0+1.2)*cell,(r0+1.2)*cell, cell*3.6, cell*3.6);
+        ludoCtx.fillRect((c0)*cell+pad,(r0)*cell+pad, cell*6-pad*2, cell*6-pad*2);
       }
-      ludoCtx.globalAlpha = 1;
+      [[-1.15,-1.15],[1.15,-1.15],[-1.15,1.15],[1.15,1.15]].forEach(function(o){
+        ludoCtx.beginPath();
+        ludoCtx.arc((c0+3+o[0])*cell, (r0+3+o[1])*cell, cell*0.62, 0, Math.PI*2);
+        ludoCtx.fillStyle = color; ludoCtx.globalAlpha = 0.28;
+        ludoCtx.fill(); ludoCtx.globalAlpha = 1;
+        ludoCtx.strokeStyle = color; ludoCtx.lineWidth = 2;
+        ludoCtx.stroke();
+      });
     }
     drawHomeQuadrant(0,0, LUDO_COLOR.Sahil);
     drawHomeQuadrant(9,9, LUDO_COLOR.Ananya);
-    ludoCtx.fillStyle = 'rgba(20,27,56,0.9)';
+    ludoCtx.fillStyle = '#ddd6c4';
     ludoCtx.fillRect(0,9*cell,cell*6,cell*6);
     ludoCtx.fillRect(9*cell,0,cell*6,cell*6);
-    ludoCtx.strokeStyle = 'rgba(217,179,120,0.25)'; ludoCtx.lineWidth = 1;
+    ludoCtx.strokeStyle = 'rgba(0,0,0,0.2)'; ludoCtx.lineWidth = 1;
     ludoCtx.strokeRect(0,9*cell,cell*6,cell*6);
     ludoCtx.strokeRect(9*cell,0,cell*6,cell*6);
 
     LUDO_PATH_RC.forEach(function(rc, i){
       const isSafe = LUDO_SAFE.indexOf(i)!==-1;
-      ludoCtx.fillStyle = isSafe ? 'rgba(217,179,120,0.4)' : ((i%2===0)?'rgba(30,38,70,0.95)':'rgba(20,27,56,0.95)');
+      ludoCtx.fillStyle = isSafe ? '#fef3c7' : '#fff';
       ludoCtx.fillRect(rc[1]*cell, rc[0]*cell, cell, cell);
-      ludoCtx.strokeStyle = 'rgba(217,179,120,0.15)'; ludoCtx.lineWidth = 1;
+      ludoCtx.strokeStyle = 'rgba(0,0,0,0.15)'; ludoCtx.lineWidth = 1;
       ludoCtx.strokeRect(rc[1]*cell, rc[0]*cell, cell, cell);
       if(isSafe){
-        ludoCtx.fillStyle = '#d9b378';
+        ludoCtx.fillStyle = '#d97706';
         ludoCtx.font = (cell*0.55)+'px sans-serif';
         ludoCtx.textAlign='center'; ludoCtx.textBaseline='middle';
         ludoCtx.fillText('\u2605', rc[1]*cell+cell/2, rc[0]*cell+cell/2);
@@ -2852,26 +2901,38 @@
     ['Sahil','Ananya'].forEach(function(name){
       LUDO_HOME_COL_RC[name].forEach(function(rc, i){
         ludoCtx.fillStyle = LUDO_COLOR[name];
-        ludoCtx.globalAlpha = 0.3 + i*0.08;
+        ludoCtx.globalAlpha = 0.55 + i*0.07;
         ludoCtx.fillRect(rc[1]*cell, rc[0]*cell, cell, cell);
         ludoCtx.globalAlpha = 1;
-        ludoCtx.strokeStyle = 'rgba(217,179,120,0.2)'; ludoCtx.lineWidth = 1;
+        ludoCtx.strokeStyle = 'rgba(0,0,0,0.15)'; ludoCtx.lineWidth = 1;
         ludoCtx.strokeRect(rc[1]*cell, rc[0]*cell, cell, cell);
       });
     });
 
-    ludoCtx.fillStyle = 'rgba(217,179,120,0.25)';
-    ludoCtx.beginPath();
-    ludoCtx.arc(7.5*cell, 7.5*cell, cell*1.5, 0, Math.PI*2);
-    ludoCtx.fill();
-    ludoCtx.font = (cell*1.1)+'px sans-serif';
-    ludoCtx.textAlign='center'; ludoCtx.textBaseline='middle';
-    ludoCtx.fillText('\u2764\uFE0F', 7.5*cell, 7.5*cell);
+    // center: 4 colored triangles meeting at the middle, classic-Ludo style
+    const cx = 7.5*cell, cy = 7.5*cell, R = cell*1.5;
+    const triangles = [
+      { pts:[[cx-R,cy-R],[cx+R,cy-R],[cx,cy]], color: LUDO_COLOR.Sahil },
+      { pts:[[cx+R,cy-R],[cx+R,cy+R],[cx,cy]], color: '#9ca3af' },
+      { pts:[[cx+R,cy+R],[cx-R,cy+R],[cx,cy]], color: LUDO_COLOR.Ananya },
+      { pts:[[cx-R,cy+R],[cx-R,cy-R],[cx,cy]], color: '#d1d5db' }
+    ];
+    triangles.forEach(function(t){
+      ludoCtx.beginPath();
+      ludoCtx.moveTo(t.pts[0][0], t.pts[0][1]);
+      ludoCtx.lineTo(t.pts[1][0], t.pts[1][1]);
+      ludoCtx.lineTo(t.pts[2][0], t.pts[2][1]);
+      ludoCtx.closePath();
+      ludoCtx.fillStyle = t.color;
+      ludoCtx.fill();
+    });
+    ludoCtx.strokeStyle = 'rgba(0,0,0,0.25)'; ludoCtx.lineWidth = 1.5;
+    ludoCtx.strokeRect(cx-R, cy-R, R*2, R*2);
 
     ['Sahil','Ananya'].forEach(function(name){
       const rc = LUDO_PATH_RC[LUDO_START[name]];
       ludoCtx.fillStyle = LUDO_COLOR[name];
-      ludoCtx.globalAlpha = 0.55;
+      ludoCtx.globalAlpha = 0.7;
       ludoCtx.fillRect(rc[1]*cell, rc[0]*cell, cell, cell);
       ludoCtx.globalAlpha = 1;
     });
@@ -2879,6 +2940,7 @@
     ['Sahil','Ananya'].forEach(function(name){
       const tokens = state.tokens[name] || [];
       const color = LUDO_COLOR[name];
+      const darkColor = LUDO_COLOR_DARK[name];
       const BASE_OFFSETS = [[-0.7,-0.7],[0.7,-0.7],[-0.7,0.7],[0.7,0.7]];
       const STACK_OFFSETS = [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]];
       tokens.forEach(function(tok, ti){
@@ -2901,9 +2963,13 @@
         }
         ludoCtx.beginPath();
         ludoCtx.fillStyle = color;
-        ludoCtx.strokeStyle = '#f6eeda'; ludoCtx.lineWidth = 1.5;
-        ludoCtx.arc(pt.x + stackOff[0]*cell, pt.y + stackOff[1]*cell, cell*0.22, 0, Math.PI*2);
+        ludoCtx.strokeStyle = darkColor; ludoCtx.lineWidth = 2;
+        ludoCtx.arc(pt.x + stackOff[0]*cell, pt.y + stackOff[1]*cell, cell*0.24, 0, Math.PI*2);
         ludoCtx.fill(); ludoCtx.stroke();
+        ludoCtx.beginPath();
+        ludoCtx.fillStyle = 'rgba(255,255,255,0.55)';
+        ludoCtx.arc(pt.x + stackOff[0]*cell - cell*0.07, pt.y + stackOff[1]*cell - cell*0.07, cell*0.08, 0, Math.PI*2);
+        ludoCtx.fill();
       });
     });
 
@@ -3214,11 +3280,22 @@
     carromCtx.fillStyle = frameGrad; carromCtx.fillRect(0,0,carromW,carromH);
 
     const surfGrad = carromCtx.createLinearGradient(border,border,carromW-border,carromH-border);
-    surfGrad.addColorStop(0,'#e8c48a'); surfGrad.addColorStop(1,'#d9a860');
+    surfGrad.addColorStop(0,'#eccb92'); surfGrad.addColorStop(0.5,'#e0b877'); surfGrad.addColorStop(1,'#d9a860');
     carromCtx.fillStyle = surfGrad;
     carromCtx.fillRect(border, border, carromW-border*2, carromH-border*2);
+    // faint wood-grain streaks
+    carromCtx.strokeStyle = 'rgba(122,74,30,0.08)'; carromCtx.lineWidth = 1;
+    for(let gy = border+8; gy < carromH-border; gy += m*0.045){
+      carromCtx.beginPath();
+      carromCtx.moveTo(border, gy + Math.sin(gy)*3);
+      carromCtx.lineTo(carromW-border, gy + Math.cos(gy)*3);
+      carromCtx.stroke();
+    }
     carromCtx.strokeStyle = 'rgba(122,31,51,0.55)'; carromCtx.lineWidth = 2;
     carromCtx.strokeRect(border, border, carromW-border*2, carromH-border*2);
+    // orange accent frame edge (classic carrom board trim)
+    carromCtx.strokeStyle = '#e07a2c'; carromCtx.lineWidth = m*0.012;
+    carromCtx.strokeRect(border*0.4, border*0.4, carromW-border*0.8, carromH-border*0.8);
 
     const pocketR = m*0.045;
     const cornerIn = border + pocketR*1.6;
@@ -4685,7 +4762,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=16').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=17').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
