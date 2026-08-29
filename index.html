@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 <div id="app">
@@ -235,7 +235,7 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v15</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v16</div>
     <div id="songNowPlaying" style="display:none;"></div>
     <div id="songSourceTabs">
       <button class="sourceTab active" data-source="youtube">&#127916; YouTube</button>
@@ -398,6 +398,7 @@
     <div id="carromStatus"></div>
     <div id="carromScore"></div>
     <canvas id="carromCanvas"></canvas>
+    <div class="carromPowerWrap" id="carromPowerWrap"><div class="carromPowerFill" id="carromPowerFill"></div></div>
     <button id="carromResetBtn" class="ghResetBtn">New game</button>
   </div>
 
@@ -409,6 +410,7 @@
     <div id="poolStatus"></div>
     <div id="poolScore"></div>
     <canvas id="poolCanvas"></canvas>
+    <div class="poolPowerWrap" id="poolPowerWrap"><div class="poolPowerFill" id="poolPowerFill"></div></div>
     <button id="poolResetBtn" class="ghResetBtn">New game</button>
   </div>
 
@@ -592,6 +594,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=15" defer></script>
+<script src="app.js?v=16" defer></script>
 </body>
 </html>

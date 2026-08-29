@@ -810,7 +810,9 @@
     display:flex; align-items:center; justify-content:space-between; padding:14px 16px;
     padding-top:calc(14px + env(safe-area-inset-top)); position:absolute; top:0; left:0; right:0; z-index:2;
     background:linear-gradient(180deg, rgba(0,0,0,0.6), transparent);
+    pointer-events:none;
   }
+  #reelsTopBar #reelsCloseBtn{ pointer-events:auto; }
   #reelsFeed{
     flex:1; overflow-y:scroll; scroll-snap-type:y mandatory; scroll-behavior:smooth;
     -webkit-overflow-scrolling:touch;
@@ -834,3 +836,21 @@
     gap:12px; padding:30px; text-align:center; color:var(--moonlight); font-family:'Jost',sans-serif; font-size:.85rem;
   }
   #reelsMsg a{ color:var(--gold); }
+
+  /* ---- Force-landscape for Pool & Carrom on portrait phones ---- */
+  .forceLandscape{
+    position:fixed !important; top:0; left:0; right:auto !important; bottom:auto !important;
+    width:100vh !important; height:100vw !important;
+    transform:rotate(90deg) translateY(-100%);
+    transform-origin:top left;
+    overflow:hidden;
+  }
+  .poolPowerWrap, .carromPowerWrap{
+    position:absolute; left:12px; bottom:12px; width:14px; height:120px;
+    background:rgba(0,0,0,0.4); border:1px solid rgba(217,179,120,0.4); border-radius:8px;
+    display:none; flex-direction:column-reverse; overflow:hidden; z-index:3;
+  }
+  .poolPowerWrap.show, .carromPowerWrap.show{ display:flex; }
+  .poolPowerFill, .carromPowerFill{
+    width:100%; background:linear-gradient(0deg,#4ade80,#facc15,#ef4444); height:0%;
+  }

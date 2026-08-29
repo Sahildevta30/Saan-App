@@ -97,6 +97,31 @@
   const ludoEl = document.getElementById('ludoGame');
   const carromEl = document.getElementById('carromGame');
   const poolEl = document.getElementById('poolGame');
+
+  /* Force-landscape: real screen-orientation locking isn't reliably available
+     (iOS Safari has no API for it at all), so we rotate the screen visually via
+     CSS instead — works on every device, no permissions needed. */
+  let forceLandscapeEl = null;
+  let forceLandscapeCb = null;
+  function forceLandscapeUpdate(){
+    if(!forceLandscapeEl) return;
+    forceLandscapeEl.classList.toggle('forceLandscape', window.innerHeight > window.innerWidth);
+    if(forceLandscapeCb) forceLandscapeCb();
+  }
+  function forceLandscapeStart(el, onChange){
+    forceLandscapeEl = el;
+    forceLandscapeCb = onChange || null;
+    forceLandscapeUpdate();
+    window.addEventListener('resize', forceLandscapeUpdate);
+    window.addEventListener('orientationchange', forceLandscapeUpdate);
+  }
+  function forceLandscapeStop(){
+    if(forceLandscapeEl) forceLandscapeEl.classList.remove('forceLandscape');
+    forceLandscapeEl = null;
+    forceLandscapeCb = null;
+    window.removeEventListener('resize', forceLandscapeUpdate);
+    window.removeEventListener('orientationchange', forceLandscapeUpdate);
+  }
   const blEl = document.getElementById('bucketList');
   const calEl = document.getElementById('calendarScreen');
   const drawEl = document.getElementById('drawingBoard');
@@ -140,6 +165,7 @@
     ludoEl.classList.remove('show');
     carromEl.classList.remove('show');
     poolEl.classList.remove('show');
+    forceLandscapeStop();
     if(tttListenerRef){ tttListenerRef.off('value'); tttListenerRef = null; }
     if(rpsListenerRef){ rpsListenerRef.off('value'); rpsListenerRef = null; }
     if(bingoListenerRef){ bingoListenerRef.off('value'); bingoListenerRef = null; }
@@ -3120,6 +3146,7 @@
 
   function openCarrom(){
     carromEl.classList.add('show');
+    forceLandscapeStart(carromEl, function(){ carromSizeCanvas(); carromDraw(); });
     carromSizeCanvas();
     carromSetMode(false);
   }
@@ -3257,14 +3284,33 @@
     if(carromAiming && carromDragPt){
       const striker = carromPieces.find(function(p){ return p.isStriker; });
       if(striker){
-        carromCtx.strokeStyle = 'rgba(122,31,51,0.85)'; carromCtx.lineWidth = 2;
+        const dx = striker.x - carromDragPt.x, dy = striker.y - carromDragPt.y;
+        const dist = Math.hypot(dx,dy);
+        const ux = dist ? dx/dist : 0, uy = dist ? dy/dist : 1;
+        const power = Math.min(dist * 0.16, CARROM_MAX_POWER);
+        const pullBack = 8 + (power/CARROM_MAX_POWER) * (carromW*0.08);
+
+        carromCtx.strokeStyle = 'rgba(122,31,51,0.9)'; carromCtx.lineWidth = 2;
         carromCtx.setLineDash([6,6]);
         carromCtx.beginPath();
-        carromCtx.moveTo(striker.x, striker.y);
-        const dx = striker.x - carromDragPt.x, dy = striker.y - carromDragPt.y;
-        carromCtx.lineTo(striker.x + dx*2, striker.y + dy*2);
+        carromCtx.moveTo(striker.x + ux*(striker.r+2), striker.y + uy*(striker.r+2));
+        carromCtx.lineTo(striker.x + ux*(striker.r + carromW*0.3), striker.y + uy*(striker.r + carromW*0.3));
         carromCtx.stroke();
         carromCtx.setLineDash([]);
+
+        const stickLen = carromW*0.24;
+        const sx1 = striker.x - ux*pullBack, sy1 = striker.y - uy*pullBack;
+        const sx2 = sx1 - ux*stickLen, sy2 = sy1 - uy*stickLen;
+        const stickGrad = carromCtx.createLinearGradient(sx1,sy1,sx2,sy2);
+        stickGrad.addColorStop(0, '#e8c48a'); stickGrad.addColorStop(1, '#5a3a1e');
+        carromCtx.strokeStyle = stickGrad;
+        carromCtx.lineWidth = Math.max(3, striker.r*0.5);
+        carromCtx.lineCap = 'round';
+        carromCtx.beginPath();
+        carromCtx.moveTo(sx1, sy1);
+        carromCtx.lineTo(sx2, sy2);
+        carromCtx.stroke();
+        carromCtx.lineCap = 'butt';
       }
     }
   }
@@ -3287,6 +3333,10 @@
   carromCanvas.addEventListener('mouseup', carromReleaseAim);
   carromCanvas.addEventListener('touchend', function(e){ e.preventDefault(); carromReleaseAim(); });
 
+  const carromPowerWrap = document.getElementById('carromPowerWrap');
+  const carromPowerFill = document.getElementById('carromPowerFill');
+  const CARROM_MAX_POWER = 14;
+
   function carromStartAim(e){
     if(carromSoloMode){
       const state = carromSoloState;
@@ -3296,6 +3346,7 @@
       const pos = carromPointerPos(e);
       if(Math.hypot(pos.x-striker.x, pos.y-striker.y) < striker.r*4){
         carromAiming = true;
+        carromPowerWrap.classList.add('show');
       }
       return;
     }
@@ -3307,22 +3358,30 @@
       const pos = carromPointerPos(e);
       if(Math.hypot(pos.x-striker.x, pos.y-striker.y) < striker.r*4){
         carromAiming = true;
+        carromPowerWrap.classList.add('show');
       }
     });
   }
   function carromMoveAim(e){
     if(!carromAiming) return;
     carromDragPt = carromPointerPos(e);
+    const striker = carromPieces.find(function(p){ return p.isStriker; });
+    if(striker){
+      const dist = Math.hypot(striker.x-carromDragPt.x, striker.y-carromDragPt.y);
+      const power = Math.min(dist * 0.16, CARROM_MAX_POWER);
+      carromPowerFill.style.height = Math.round((power/CARROM_MAX_POWER)*100) + '%';
+    }
     carromDraw();
   }
   function carromReleaseAim(){
+    carromPowerWrap.classList.remove('show');
     if(!carromAiming || !carromDragPt) { carromAiming = false; return; }
     const striker = carromPieces.find(function(p){ return p.isStriker; });
     carromAiming = false;
     const dx = striker.x - carromDragPt.x, dy = striker.y - carromDragPt.y;
     const dist = Math.hypot(dx,dy);
     if(dist < 5){ carromDragPt = null; return; }
-    const power = Math.min(dist * 0.16, 14);
+    const power = Math.min(dist * 0.16, CARROM_MAX_POWER);
     striker.vx = (dx/dist) * power;
     striker.vy = (dy/dist) * power;
     carromDragPt = null;
@@ -3548,6 +3607,7 @@
 
   function openPool(){
     poolEl.classList.add('show');
+    forceLandscapeStart(poolEl, function(){ poolSizeCanvas(); poolDraw(); });
     poolSizeCanvas();
     const ref = db.ref('games/pool');
     poolListenerRef = ref;
@@ -3653,14 +3713,35 @@
     if(poolAiming && poolDragPt){
       const cue = poolPieces.find(function(p){ return p.isCue; });
       if(cue){
-        poolCtx.strokeStyle = 'rgba(255,255,255,0.8)'; poolCtx.lineWidth = 2;
+        const dx = cue.x - poolDragPt.x, dy = cue.y - poolDragPt.y;
+        const dist = Math.hypot(dx,dy);
+        const ux = dist ? dx/dist : 0, uy = dist ? dy/dist : 1;
+        const power = Math.min(dist * 0.13, POOL_MAX_POWER);
+        const pullBack = 10 + (power/POOL_MAX_POWER) * (poolW*0.09);
+
+        // forward aim/trajectory line
+        poolCtx.strokeStyle = 'rgba(255,255,255,0.85)'; poolCtx.lineWidth = 2;
         poolCtx.setLineDash([6,6]);
         poolCtx.beginPath();
-        poolCtx.moveTo(cue.x, cue.y);
-        const dx = cue.x - poolDragPt.x, dy = cue.y - poolDragPt.y;
-        poolCtx.lineTo(cue.x + dx*2.5, cue.y + dy*2.5);
+        poolCtx.moveTo(cue.x + ux*(cue.r+2), cue.y + uy*(cue.r+2));
+        poolCtx.lineTo(cue.x + ux*(cue.r + poolW*0.35), cue.y + uy*(cue.r + poolW*0.35));
         poolCtx.stroke();
         poolCtx.setLineDash([]);
+
+        // cue stick, pulled back behind the ball proportional to power
+        const stickLen = poolW*0.28;
+        const stickX1 = cue.x - ux*pullBack, stickY1 = cue.y - uy*pullBack;
+        const stickX2 = stickX1 - ux*stickLen, stickY2 = stickY1 - uy*stickLen;
+        const stickGrad = poolCtx.createLinearGradient(stickX1,stickY1,stickX2,stickY2);
+        stickGrad.addColorStop(0, '#e8c48a'); stickGrad.addColorStop(1, '#5a3a1e');
+        poolCtx.strokeStyle = stickGrad;
+        poolCtx.lineWidth = Math.max(3, cue.r*0.55);
+        poolCtx.lineCap = 'round';
+        poolCtx.beginPath();
+        poolCtx.moveTo(stickX1, stickY1);
+        poolCtx.lineTo(stickX2, stickY2);
+        poolCtx.stroke();
+        poolCtx.lineCap = 'butt';
       }
     }
   }
@@ -3679,6 +3760,10 @@
   poolCanvas.addEventListener('mouseup', poolReleaseAim);
   poolCanvas.addEventListener('touchend', function(e){ e.preventDefault(); poolReleaseAim(); });
 
+  const poolPowerWrap = document.getElementById('poolPowerWrap');
+  const poolPowerFill = document.getElementById('poolPowerFill');
+  const POOL_MAX_POWER = 13;
+
   function poolStartAim(e){
     db.ref('games/pool').once('value').then(function(snap){
       const state = snap.val();
@@ -3686,18 +3771,29 @@
       const cue = poolPieces.find(function(p){ return p.isCue; });
       if(!cue || !cue.active) return;
       const pos = poolPointerPos(e);
-      if(Math.hypot(pos.x-cue.x, pos.y-cue.y) < cue.r*5){ poolAiming = true; }
+      if(Math.hypot(pos.x-cue.x, pos.y-cue.y) < cue.r*5){ poolAiming = true; poolPowerWrap.classList.add('show'); }
     });
   }
-  function poolMoveAim(e){ if(!poolAiming) return; poolDragPt = poolPointerPos(e); poolDraw(); }
+  function poolMoveAim(e){
+    if(!poolAiming) return;
+    poolDragPt = poolPointerPos(e);
+    const cue = poolPieces.find(function(p){ return p.isCue; });
+    if(cue){
+      const dist = Math.hypot(cue.x-poolDragPt.x, cue.y-poolDragPt.y);
+      const power = Math.min(dist * 0.13, POOL_MAX_POWER);
+      poolPowerFill.style.height = Math.round((power/POOL_MAX_POWER)*100) + '%';
+    }
+    poolDraw();
+  }
   function poolReleaseAim(){
+    poolPowerWrap.classList.remove('show');
     if(!poolAiming || !poolDragPt){ poolAiming = false; return; }
     const cue = poolPieces.find(function(p){ return p.isCue; });
     poolAiming = false;
     const dx = cue.x - poolDragPt.x, dy = cue.y - poolDragPt.y;
     const dist = Math.hypot(dx,dy);
     if(dist < 5){ poolDragPt = null; return; }
-    const power = Math.min(dist * 0.13, 13);
+    const power = Math.min(dist * 0.13, POOL_MAX_POWER);
     cue.vx = (dx/dist)*power; cue.vy = (dy/dist)*power;
     poolDragPt = null;
     poolRunShot();
@@ -4589,7 +4685,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=15').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=16').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
