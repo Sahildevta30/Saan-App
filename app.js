@@ -206,7 +206,6 @@
     ludoEl.classList.remove('show');
     carromEl.classList.remove('show');
     poolEl.classList.remove('show');
-    forceLandscapeStop();
     if(tttListenerRef){ tttListenerRef.off('value'); tttListenerRef = null; }
     if(rpsListenerRef){ rpsListenerRef.off('value'); rpsListenerRef = null; }
     if(bingoListenerRef){ bingoListenerRef.off('value'); bingoListenerRef = null; }
@@ -3212,7 +3211,6 @@
 
   function openCarrom(){
     carromEl.classList.add('show');
-    forceLandscapeStart(carromEl, function(){ carromSizeCanvas(); carromDraw(); });
     carromSizeCanvas();
     carromSetMode(false);
   }
@@ -3684,7 +3682,6 @@
 
   function openPool(){
     poolEl.classList.add('show');
-    forceLandscapeStart(poolEl, function(){ poolSizeCanvas(); poolDraw(); });
     poolSizeCanvas();
     const ref = db.ref('games/pool');
     poolListenerRef = ref;
@@ -4762,7 +4759,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=17').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=18').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
