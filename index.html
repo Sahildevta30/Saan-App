@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=21">
+<link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 <div id="app">
@@ -163,6 +163,10 @@
         <span class="ghIcon">&#128241;</span>
         <span class="ghName">Reels</span>
       </button>
+      <button class="ghCard" data-game="ytbrowse">
+        <span class="ghIcon">&#128250;</span>
+        <span class="ghName">YouTube</span>
+      </button>
     </div>
 
     <div class="ghList catSection" id="cat-music" style="display:none;">
@@ -235,7 +239,7 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v21</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v22</div>
     <div id="songNowPlaying" style="display:none;"></div>
     <div id="songSourceTabs">
       <button class="sourceTab active" data-source="youtube">&#127916; YouTube</button>
@@ -284,6 +288,36 @@
     </div>
     <div id="reelsFeed"></div>
     <div id="reelsMsg" style="display:none;"></div>
+  </div>
+
+  <div id="ytBrowseScreen" class="gameScreen">
+    <div class="ghHdr">
+      <div class="brand" style="font-size:20px;">YouTube</div>
+      <button class="iconBtn" id="ytBrowseCloseBtn" aria-label="Close">&#10005;</button>
+    </div>
+    <div id="ytSearchRow">
+      <input type="text" id="ytSearchInput" placeholder="Search videos or songs...">
+      <button id="ytSearchBtn">&#128269;</button>
+    </div>
+    <div id="ytChipsRow">
+      <button class="ytChip" data-q="trending">Trending</button>
+      <button class="ytChip" data-q="music">Music</button>
+      <button class="ytChip" data-q="comedy">Comedy</button>
+      <button class="ytChip" data-q="bollywood songs">Bollywood</button>
+      <button class="ytChip" data-q="vlog">Vlogs</button>
+      <button class="ytChip" data-q="movies">Movies</button>
+    </div>
+    <div id="ytList"></div>
+    <div id="ytMsg" style="display:none;"></div>
+  </div>
+
+  <div id="ytPlayerScreen" class="gameScreen">
+    <div class="ghHdr">
+      <button class="iconBtn" id="ytPlayerBackBtn" aria-label="Back">&#10094;</button>
+      <div class="brand" id="ytPlayerTitle" style="font-size:16px;">Video</div>
+      <button class="iconBtn" id="ytPlayerCloseBtn" aria-label="Close">&#10005;</button>
+    </div>
+    <div id="ytPlayerHost"></div>
   </div>
 
   <div id="wordChain" class="gameScreen">
@@ -626,6 +660,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=21" defer></script>
+<script src="app.js?v=22" defer></script>
 </body>
 </html>
