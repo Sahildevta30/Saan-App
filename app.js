@@ -3359,9 +3359,17 @@
         carromLastMirroredShotId = s.shotId;
         if(carromSoloMode || carromShotRunning) return;
         const striker = carromPieces.find(function(p){ return p.isStriker; });
-        if(!striker) return;
-        striker.vx = s.vx; striker.vy = s.vy;
-        carromRunShot(s.by, true);
+        if(striker){
+          striker.vx = s.vx; striker.vy = s.vy;
+          carromRunShot(s.by, true);
+          return;
+        }
+        db.ref('games/carrom').once('value').then(function(snap2){
+          const st = snap2.val();
+          if(st && st.coins) carromPieces = st.coins;
+          const striker2 = carromPieces.find(function(p){ return p.isStriker; });
+          if(striker2 && !carromShotRunning){ striker2.vx = s.vx; striker2.vy = s.vy; carromRunShot(s.by, true); }
+        });
       });
     }
   }
@@ -3396,8 +3404,9 @@
       ref.on('value', function(snap){
         const state = snap.val();
         if(!state) return;
-        if(!carromShotRunning){
-          carromPieces = (state.shotInProgress && state.liveCoins) ? state.liveCoins : state.coins;
+        if(!carromShotRunning || !state.shotInProgress){
+          carromPieces = state.coins;
+          carromShotRunning = false;
           carromDraw();
         }
         carromUpdateStatus(state);
@@ -3849,8 +3858,9 @@
     ref.on('value', function(snap){
       const state = snap.val();
       if(!state) return;
-      if(!poolShotRunning){
+      if(!poolShotRunning || !state.shotInProgress){
         poolPieces = state.balls;
+        poolShotRunning = false;
         poolDraw();
       }
       poolUpdateStatus(state);
@@ -3863,9 +3873,18 @@
         poolLastMirroredShotId = s.shotId;
         if(poolShotRunning) return;
         const cue = poolPieces.find(function(p){ return p.isCue; });
-        if(!cue) return;
-        cue.vx = s.vx; cue.vy = s.vy;
-        poolRunShot(true);
+        if(cue){
+          cue.vx = s.vx; cue.vy = s.vy;
+          poolRunShot(true);
+          return;
+        }
+        // poolPieces wasn't ready yet — fetch fresh and retry once
+        db.ref('games/pool').once('value').then(function(snap2){
+          const st = snap2.val();
+          if(st && st.balls) poolPieces = st.balls;
+          const cue2 = poolPieces.find(function(p){ return p.isCue; });
+          if(cue2 && !poolShotRunning){ cue2.vx = s.vx; cue2.vy = s.vy; poolRunShot(true); }
+        });
       });
     }
   }
@@ -4927,7 +4946,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=22').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=23').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
