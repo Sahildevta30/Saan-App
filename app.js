@@ -132,6 +132,8 @@
     const input = document.getElementById(prefix + 'ChatInput');
     const sendBtn = document.getElementById(prefix + 'ChatSendBtn');
     const closeBtn = document.getElementById(prefix + 'ChatCloseBtn');
+    const emojiBtn = document.getElementById(prefix + 'ChatEmojiBtn');
+    const emojiRow = document.getElementById(prefix + 'ChatEmojiRow');
     if(!btn) return;
     let ref = null;
     function render(snap){
@@ -151,18 +153,27 @@
     }
     function openPanel(){
       panel.classList.add('show');
+      btn.style.display = 'none';
       if(!ref){
         ref = db.ref('messages').limitToLast(25);
         ref.on('value', render);
       }
     }
-    function closePanel(){ panel.classList.remove('show'); }
-    btn.addEventListener('click', function(){
-      if(panel.classList.contains('show')) closePanel(); else openPanel();
-    });
+    function closePanel(){
+      panel.classList.remove('show');
+      emojiRow.classList.remove('show');
+      btn.style.display = '';
+    }
+    btn.addEventListener('click', openPanel);
     if(closeBtn) closeBtn.addEventListener('click', closePanel);
     sendBtn.addEventListener('click', send);
     input.addEventListener('keydown', function(e){ if(e.key === 'Enter') send(); });
+    if(emojiBtn){
+      emojiBtn.addEventListener('click', function(){ emojiRow.classList.toggle('show'); });
+      emojiRow.querySelectorAll('.gcEmoji').forEach(function(e){
+        e.addEventListener('click', function(){ input.value += e.textContent; input.focus(); });
+      });
+    }
   }
   setupGameChat('pool');
   setupGameChat('carrom');
@@ -4764,7 +4775,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=19').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=20').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){

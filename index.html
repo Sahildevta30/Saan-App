@@ -19,7 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js" defer></script>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <div id="app">
@@ -235,7 +235,7 @@
       <div class="brand" style="font-size:20px;">Our Playlist</div>
       <button class="iconBtn" id="songsCloseBtn" aria-label="Close">&#10005;</button>
     </div>
-    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v19</div>
+    <div style="text-align:center;font-size:.55rem;opacity:.35;color:#d9b378;margin-top:-4px;">build v20</div>
     <div id="songNowPlaying" style="display:none;"></div>
     <div id="songSourceTabs">
       <button class="sourceTab active" data-source="youtube">&#127916; YouTube</button>
@@ -370,7 +370,7 @@
     <div class="gameChatPanel" id="slChatPanel">
       <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="slChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="slChatList"></div>
-      <div class="gameChatInputRow"><input type="text" id="slChatInput" placeholder="Message..."><button id="slChatSendBtn">&#10148;</button></div>
+      <div class="gameChatEmojiRow" id="slChatEmojiRow"><button class="gcEmoji">&#128512;</button><button class="gcEmoji">&#128525;</button><button class="gcEmoji">&#128514;</button><button class="gcEmoji">&#128536;</button><button class="gcEmoji">&#128077;</button><button class="gcEmoji">&#10084;&#65039;</button><button class="gcEmoji">&#128557;</button><button class="gcEmoji">&#128075;</button></div><div class="gameChatInputRow"><button id="slChatEmojiBtn" class="gcEmojiToggle">&#128512;</button><input type="text" id="slChatInput" placeholder="Message..."><button id="slChatSendBtn">&#10148;</button></div>
     </div>
   </div>
 
@@ -394,7 +394,7 @@
     <div class="gameChatPanel" id="ludoChatPanel">
       <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="ludoChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="ludoChatList"></div>
-      <div class="gameChatInputRow"><input type="text" id="ludoChatInput" placeholder="Message..."><button id="ludoChatSendBtn">&#10148;</button></div>
+      <div class="gameChatEmojiRow" id="ludoChatEmojiRow"><button class="gcEmoji">&#128512;</button><button class="gcEmoji">&#128525;</button><button class="gcEmoji">&#128514;</button><button class="gcEmoji">&#128536;</button><button class="gcEmoji">&#128077;</button><button class="gcEmoji">&#10084;&#65039;</button><button class="gcEmoji">&#128557;</button><button class="gcEmoji">&#128075;</button></div><div class="gameChatInputRow"><button id="ludoChatEmojiBtn" class="gcEmojiToggle">&#128512;</button><input type="text" id="ludoChatInput" placeholder="Message..."><button id="ludoChatSendBtn">&#10148;</button></div>
     </div>
   </div>
 
@@ -420,7 +420,7 @@
     <div class="gameChatPanel" id="carromChatPanel">
       <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="carromChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="carromChatList"></div>
-      <div class="gameChatInputRow"><input type="text" id="carromChatInput" placeholder="Message..."><button id="carromChatSendBtn">&#10148;</button></div>
+      <div class="gameChatEmojiRow" id="carromChatEmojiRow"><button class="gcEmoji">&#128512;</button><button class="gcEmoji">&#128525;</button><button class="gcEmoji">&#128514;</button><button class="gcEmoji">&#128536;</button><button class="gcEmoji">&#128077;</button><button class="gcEmoji">&#10084;&#65039;</button><button class="gcEmoji">&#128557;</button><button class="gcEmoji">&#128075;</button></div><div class="gameChatInputRow"><button id="carromChatEmojiBtn" class="gcEmojiToggle">&#128512;</button><input type="text" id="carromChatInput" placeholder="Message..."><button id="carromChatSendBtn">&#10148;</button></div>
     </div>
   </div>
 
@@ -442,7 +442,7 @@
     <div class="gameChatPanel" id="poolChatPanel">
       <div class="gameChatPanelHdr"><span>Chat</span><button class="gameChatCloseBtn" id="poolChatCloseBtn">&#10005;</button></div>
       <div class="gameChatList" id="poolChatList"></div>
-      <div class="gameChatInputRow"><input type="text" id="poolChatInput" placeholder="Message..."><button id="poolChatSendBtn">&#10148;</button></div>
+      <div class="gameChatEmojiRow" id="poolChatEmojiRow"><button class="gcEmoji">&#128512;</button><button class="gcEmoji">&#128525;</button><button class="gcEmoji">&#128514;</button><button class="gcEmoji">&#128536;</button><button class="gcEmoji">&#128077;</button><button class="gcEmoji">&#10084;&#65039;</button><button class="gcEmoji">&#128557;</button><button class="gcEmoji">&#128075;</button></div><div class="gameChatInputRow"><button id="poolChatEmojiBtn" class="gcEmojiToggle">&#128512;</button><input type="text" id="poolChatInput" placeholder="Message..."><button id="poolChatSendBtn">&#10148;</button></div>
     </div>
   </div>
 
@@ -626,6 +626,6 @@
 
 <script src="images.js" defer></script>
 
-<script src="app.js?v=19" defer></script>
+<script src="app.js?v=20" defer></script>
 </body>
 </html>
