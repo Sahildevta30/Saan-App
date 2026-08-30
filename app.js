@@ -3225,11 +3225,26 @@
     return [ {x:m,y:m}, {x:carromW-m,y:m}, {x:m,y:carromH-m}, {x:carromW-m,y:carromH-m} ];
   }
 
+  let carromLastMirroredShotId = null;
   function openCarrom(){
     carromEl.classList.add('show');
     carromSizeCanvas();
     carromSetMode(false);
+    if(!carromShotListenerAttached){
+      carromShotListenerAttached = true;
+      db.ref('games/carrom/shot').on('value', function(snap){
+        const s = snap.val();
+        if(!s || s.by === myName || s.shotId === carromLastMirroredShotId) return;
+        carromLastMirroredShotId = s.shotId;
+        if(carromSoloMode || carromShotRunning) return;
+        const striker = carromPieces.find(function(p){ return p.isStriker; });
+        if(!striker) return;
+        striker.vx = s.vx; striker.vy = s.vy;
+        carromRunShot(s.by, true);
+      });
+    }
   }
+  let carromShotListenerAttached = false;
 
   document.getElementById('carromModeTogether').addEventListener('click', function(){ carromSetMode(false); });
   document.getElementById('carromModeSolo').addEventListener('click', function(){ carromSetMode(true); });
@@ -3476,14 +3491,19 @@
     striker.vx = (dx/dist) * power;
     striker.vy = (dy/dist) * power;
     carromDragPt = null;
+    if(!carromSoloMode){
+      db.ref('games/carrom/shot').set({ by: myName, vx: striker.vx, vy: striker.vy, shotId: Date.now() + '-' + Math.random() });
+    }
     carromRunShot(myName);
   }
 
-  function carromRunShot(shooterName){
+  function carromRunShot(shooterName, isMirror){
     shooterName = shooterName || myName;
     carromShotRunning = true;
-    if(carromSoloMode){ carromSoloState.shotInProgress = true; carromUpdateStatus(carromSoloState); }
-    else { db.ref('games/carrom').update({ shotInProgress: true }); }
+    if(!isMirror){
+      if(carromSoloMode){ carromSoloState.shotInProgress = true; carromUpdateStatus(carromSoloState); }
+      else { db.ref('games/carrom').update({ shotInProgress: true }); }
+    }
     let settleFrames = 0;
     function loop(ts){
       physStep(carromPieces, carromW, carromH, 0.985);
@@ -3491,11 +3511,8 @@
       const potted = physCheckPockets(carromPieces, pockets, Math.min(carromW,carromH)*0.045);
       carromDraw();
       if(!physAnyMoving(carromPieces)){ settleFrames++; } else { settleFrames = 0; }
-      if(!carromSoloMode && ts - carromLastSync > 90){
-        carromLastSync = ts;
-        db.ref('games/carrom/liveCoins').set(carromPieces.map(function(p){ return {id:p.id,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,vx:0,vy:0,r:p.r,color:p.color,active:p.active,isStriker:!!p.isStriker,colorName:p.colorName||null}; }));
-      }
       if(settleFrames > 20){
+        if(isMirror){ carromShotRunning = false; return; }
         carromFinishShot(potted, shooterName);
         return;
       }
@@ -3696,6 +3713,8 @@
     ];
   }
 
+  let poolLastMirroredShotId = null;
+  let poolShotListenerAttached = false;
   function openPool(){
     poolEl.classList.add('show');
     poolSizeCanvas();
@@ -3710,11 +3729,24 @@
       const state = snap.val();
       if(!state) return;
       if(!poolShotRunning){
-        poolPieces = (state.shotInProgress && state.liveBalls) ? state.liveBalls : state.balls;
+        poolPieces = state.balls;
         poolDraw();
       }
       poolUpdateStatus(state);
     });
+    if(!poolShotListenerAttached){
+      poolShotListenerAttached = true;
+      db.ref('games/pool/shot').on('value', function(snap){
+        const s = snap.val();
+        if(!s || s.by === myName || s.shotId === poolLastMirroredShotId) return;
+        poolLastMirroredShotId = s.shotId;
+        if(poolShotRunning) return;
+        const cue = poolPieces.find(function(p){ return p.isCue; });
+        if(!cue) return;
+        cue.vx = s.vx; cue.vy = s.vy;
+        poolRunShot(true);
+      });
+    }
   }
 
   function poolUpdateStatus(state){
@@ -3886,25 +3918,24 @@
     const power = Math.min(dist * 0.13, POOL_MAX_POWER);
     cue.vx = (dx/dist)*power; cue.vy = (dy/dist)*power;
     poolDragPt = null;
+    db.ref('games/pool/shot').set({ by: myName, vx: cue.vx, vy: cue.vy, shotId: Date.now() + '-' + Math.random() });
     poolRunShot();
   }
 
-  function poolRunShot(){
+  function poolRunShot(isMirror){
     poolShotRunning = true;
-    db.ref('games/pool').update({ shotInProgress:true });
+    if(!isMirror) db.ref('games/pool').update({ shotInProgress:true });
     let settleFrames = 0;
     function loop(ts){
       physStep(poolPieces, poolW, poolH, 0.988);
       const potted = physCheckPockets(poolPieces, poolPockets(), poolW*0.024);
       poolDraw();
       if(!physAnyMoving(poolPieces)){ settleFrames++; } else { settleFrames = 0; }
-      if(ts - poolLastSync > 90){
-        poolLastSync = ts;
-        db.ref('games/pool/liveBalls').set(poolPieces.map(function(p){
-          return {id:p.id,num:p.num||null,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,vx:0,vy:0,r:p.r,color:p.color,active:p.active,isCue:!!p.isCue,isStripe:!!p.isStripe,group:p.group||null};
-        }));
+      if(settleFrames > 20){
+        if(isMirror){ poolShotRunning = false; return; }
+        poolFinishShot();
+        return;
       }
-      if(settleFrames > 20){ poolFinishShot(); return; }
       poolRafId = requestAnimationFrame(loop);
     }
     poolRafId = requestAnimationFrame(loop);
@@ -4775,7 +4806,7 @@
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js?v=20').catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=21').catch(function(){});
   });
   let swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
